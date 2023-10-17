@@ -1,0 +1,5 @@
+vite.config.ts
+server.js
+src/dist
+node_modules
+public

@@ -19,9 +19,11 @@ class User extends BaseModel{
   async create(data: SignUpData): Promise<unknown> {
     try {
       console.log(data);
+      const {name, username, email, password} = data;
       const result = await db.run(
-        `INSERT INTO users (name, username, email, password) VALUES ('1one', '1two', '1three', '1four')`,
-
+        //`INSERT INTO users (name, username, email, password) VALUES ('1one', '1two', '1three', '1four')`,
+        'INSERT INTO users (name, username, email, password) VALUES (?, ?, ?, ?)',
+        [name, username, email, password]
       );
       return result;
     } catch (e) {

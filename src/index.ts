@@ -67,7 +67,7 @@ io.on('connection', async (socket) => {
         'SELECT * FROM users WHERE id > ?',
         [socket.handshake.auth.serverOffset || 0],
         (_err, row) => {
-          socket.emit('chat message', row.username + ` ` + row.id + ` ` + row.email + ` ` + row.password);
+          socket.emit('chat message', row.name + ` ` + row.username + ` ` + row.id + ` ` + row.email + ` ` + row.password);
           console.log(row.username)
         },
       );

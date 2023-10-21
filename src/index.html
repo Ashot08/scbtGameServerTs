@@ -18,6 +18,18 @@
 </head>
 <body>
 <ul id="messages"></ul>
+<form id="registration_form" action="">
+    <input placeholder="name" type="text" name="name">
+
+    <input placeholder="email" type="email" name="email">
+
+    <input placeholder="username" type="text" name="username">
+
+    <input placeholder="password" type="password" name="password">
+
+    <input type="submit" value="send">
+    <div id="result_block"></div>
+</form>
 <form id="form" action="">
     <input id="input" autocomplete="off" /><button>Send</button>
 </form>
@@ -52,18 +64,28 @@
     });
 
 
-    // fetch('http://localhost:3001/auth/signup', {
-    //     method: 'POST',
-    //     headers: {
-    //         'Content-Type': 'application/json;charset=utf-8'
-    //     },
-    //     body: JSON.stringify({
-    //         username: 'loh',
-    //         password: 'hoho',
-    //         email: 'ololsdf@yandex.ru',
-    //         nane: 'griboed',
-    //     }),
-    // }).then(res => console.log(res))
+
+
+    document.querySelector('#registration_form').addEventListener('submit', function(e){
+        e.preventDefault();
+        const formData = new FormData(this);
+
+        fetch('http://localhost:3001/auth/signup', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json;charset=utf-8',
+            },
+            body: JSON.stringify({
+                username: formData.get('username'),
+                name: formData.get('name'),
+                email: formData.get('email'),
+                password: formData.get('password'),
+            }),
+        }).then(res => {
+            console.log(res)
+        })
+
+    })
 
 </script>
 </body>

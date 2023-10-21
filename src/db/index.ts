@@ -3,7 +3,7 @@ import { open } from 'sqlite';
 
 // open the database file
 const db = await open({
-  filename: 'chat.db',
+  filename: 'scbt_game_table.db',
   driver: sqlite3.Database,
 });
 
@@ -15,11 +15,10 @@ await db.exec(`
   );
 `);
 
-
 await db.exec(`
   CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      login TEXT UNIQUE,
+      username TEXT UNIQUE,
       name TEXT,
       email TEXT,
       password TEXT

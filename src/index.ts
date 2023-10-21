@@ -14,6 +14,9 @@ app.use(cors());
 const server = createServer(app);
 const io = new Server(server);
 
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 app.use('/auth', authRouter);
 
 const __filename = fileURLToPath(import.meta.url);
@@ -53,13 +56,22 @@ io.on('connection', async (socket) => {
   if (!socket.recovered) {
     // if the connection state recovery was not successful
     try {
+      // await db.each(
+      //   'SELECT id, content FROM messages WHERE id > ?',
+      //   [socket.handshake.auth.serverOffset || 0],
+      //   (_err, row) => {
+      //     socket.emit('chat message', row.content, row.id);
+      //   },
+      // );
       await db.each(
-        'SELECT id, content FROM messages WHERE id > ?',
+        'SELECT * FROM users WHERE id > ?',
         [socket.handshake.auth.serverOffset || 0],
         (_err, row) => {
-          socket.emit('chat message', row.content, row.id);
+          socket.emit('chat message', row.username + ` ` + row.id + ` ` + row.email + ` ` + row.password);
+          console.log(row.username)
         },
       );
+
     } catch (e) {
       // something went wrong
     }

@@ -1,3 +1,5 @@
+import User from "../db/models/User.ts";
+
 class AuthController {
   login(req: any, res: any) {
     try {
@@ -7,18 +9,23 @@ class AuthController {
     }
   }
 
-  signup(req: any, res: any) {
+  async signup(req: any, res: any) {
     try {
-      console.log('try signup', res);
+      // const {username, password} = req.body;
+      const result = await User.create(req.body);
+      console.log('try signup', req.body);
+      console.log('try signup', result);
+      res.json({ message: 'Пользователь успешно зарегистрирован' });
     } catch (e) {
-      console.log(e, req);
+      console.log(e, req.body);
+      res.status(400).json({ message: 'Registration error' });
     }
   }
 
   getUsers(req: any, res: any) {
     try {
       console.log('users here');
-      res.json('users here res')
+      res.json('users here res');
     } catch (e) {
       console.log(e, req);
     }

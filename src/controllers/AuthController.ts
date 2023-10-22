@@ -2,6 +2,15 @@ import User from '../db/models/User.ts';
 import {ISqlite} from "sqlite";
 import RunResult = ISqlite.RunResult;
 import {validationResult} from "express-validator";
+import jwt from 'jsonwebtoken';
+import config from '../../config.ts'
+
+function generateAccessToken(id: number){
+  const payload = {
+    id
+  };
+  return jwt.sign(payload, config.secret, {expiresIn: "24h"});
+}
 
 class AuthController {
   login(req: any, res: any) {
@@ -30,7 +39,8 @@ class AuthController {
       const result: RunResult = await User.create(req.body);
 
       if(result.lastID) {
-        return res.json({ message: 'Пользователь успешно зарегистрирован', result });
+        const token = generateAccessToken(result.lastID);
+        return res.json({ message: 'Пользователь успешно зарегистрирован', result, token });
       }
     } catch (e) {
       return res.status(400).json({ message: 'Registration error' });

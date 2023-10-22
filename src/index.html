@@ -69,7 +69,8 @@
     document.querySelector('#registration_form').addEventListener('submit', function(e){
         e.preventDefault();
         const formData = new FormData(this);
-
+        const resultBlock = this.querySelector('#result_block');
+        resultBlock.textContent = 'Loading...';
         fetch('http://localhost:3001/auth/signup', {
             method: 'POST',
             headers: {
@@ -81,8 +82,8 @@
                 email: formData.get('email'),
                 password: formData.get('password'),
             }),
-        }).then(res => {
-            console.log(res)
+        }).then(res => res.json()).then(res => {
+            resultBlock.textContent = res.message;
         })
 
     })

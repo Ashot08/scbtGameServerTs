@@ -23,7 +23,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 app.get('/', (req: Request, res: Response) => {
-  console.log(req);
+  console.log('req body (src/index.ts): ', req.body);
   res.sendFile(join(__dirname, 'index.html'));
 });
 
@@ -67,11 +67,10 @@ io.on('connection', async (socket) => {
         'SELECT * FROM users WHERE id > ?',
         [socket.handshake.auth.serverOffset || 0],
         (_err, row) => {
-          socket.emit('chat message', row.name + ` ` + row.username + ` ` + row.id + ` ` + row.email + ` ` + row.password);
-          console.log(row.username)
+          socket.emit('chat message', `${row.name} - ${row.username} - ${row.id} - ${row.email}`);
+          console.log(row.username);
         },
       );
-
     } catch (e) {
       // something went wrong
     }

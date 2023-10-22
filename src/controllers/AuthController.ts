@@ -1,4 +1,6 @@
-import User from "../db/models/User.ts";
+import User from '../db/models/User.ts';
+import {ISqlite} from "sqlite";
+import RunResult = ISqlite.RunResult;
 
 class AuthController {
   login(req: any, res: any) {
@@ -11,14 +13,20 @@ class AuthController {
 
   async signup(req: any, res: any) {
     try {
-      // const {username, password} = req.body;
-      const result = await User.create(req.body);
-      console.log('try signup', req.body);
-      console.log('try signup', result);
-      res.json({ message: 'Пользователь успешно зарегистрирован' });
+      const {username} = req.body;
+      const alreadyExistUser = await User.read({username});
+
+      if(alreadyExistUser?.id){
+        return res.json({ message: 'Пользователь уже существует' });
+      }
+
+      const result: RunResult = await User.create(req.body);
+
+      if(result.lastID) {
+        return res.json({ message: 'Пользователь успешно зарегистрирован', result });
+      }
     } catch (e) {
-      console.log(e, req.body);
-      res.status(400).json({ message: 'Registration error' });
+      return res.status(400).json({ message: 'Registration error' });
     }
   }
 

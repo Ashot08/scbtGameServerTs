@@ -1,6 +1,7 @@
 import User from '../db/models/User.ts';
 import {ISqlite} from "sqlite";
 import RunResult = ISqlite.RunResult;
+import {validationResult} from "express-validator";
 
 class AuthController {
   login(req: any, res: any) {
@@ -13,6 +14,12 @@ class AuthController {
 
   async signup(req: any, res: any) {
     try {
+      const validationErrors = validationResult(req);
+
+      if(!validationErrors.isEmpty()){
+        return res.status(400).json({message: "Ошибка при валидации данных", validationErrors})
+      }
+
       const {username} = req.body;
       const alreadyExistUser = await User.read({username});
 

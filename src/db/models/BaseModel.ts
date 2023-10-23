@@ -1,4 +1,4 @@
-import {ReadOptions} from "./User.ts";
+import { ReadOptions } from './User.ts';
 
 export default abstract class BaseModel {
   public abstract create?(data: unknown): Promise<unknown>

@@ -1,23 +1,36 @@
-import User from '../db/models/User.ts';
-import {ISqlite} from "sqlite";
-import RunResult = ISqlite.RunResult;
-import {validationResult} from "express-validator";
 import jwt from 'jsonwebtoken';
-import config from '../../config.ts'
+import { ISqlite } from 'sqlite';
+import { validationResult } from 'express-validator';
+import RunResult = ISqlite.RunResult;
+import config from '../../config.ts';
+import User from '../db/models/User.ts';
+import bcrypt from 'bcrypt';
 
-function generateAccessToken(id: number){
+function generateAccessToken(id: number) {
   const payload = {
-    id
+    id,
   };
-  return jwt.sign(payload, config.secret, {expiresIn: "24h"});
+  return jwt.sign(payload, config.secret, { expiresIn: '24h' });
 }
 
 class AuthController {
-  login(req: any, res: any) {
+  async login(req: any, res: any) {
     try {
-      console.log('try login', res);
+      const { username, password } = req.body;
+      const user = await User.read({username});
+      if(!user){
+        return res.status(400).json({ message: `Ошибка в имени пользователя или пароле 1` });
+      }
+      const isValidPassword = bcrypt.compareSync(password, user.password);
+
+      if(!isValidPassword){
+        return res.status(400).json({ message: `Ошибка в имени пользователя или пароле` });
+      }
+
+      const token = generateAccessToken(user.id);
+      return res.json({ message: 'Пользователь успешно залогинен', token });
     } catch (e) {
-      console.log(e, req);
+      return res.status(400).json({ message: 'Login error' });
     }
   }
 
@@ -25,20 +38,23 @@ class AuthController {
     try {
       const validationErrors = validationResult(req);
 
-      if(!validationErrors.isEmpty()){
-        return res.status(400).json({message: "Ошибка при валидации данных", validationErrors})
+      if (!validationErrors.isEmpty()) {
+        return res.status(400).json({ message: 'Ошибка при валидации данных', validationErrors });
       }
 
-      const {username} = req.body;
-      const alreadyExistUser = await User.read({username});
+      const { username, password } = req.body;
+      const alreadyExistUser = await User.read({ username });
 
-      if(alreadyExistUser?.id){
+      if (alreadyExistUser?.id) {
         return res.json({ message: 'Пользователь уже существует' });
       }
 
-      const result: RunResult = await User.create(req.body);
+      const hashPassword = bcrypt.hashSync(password, 5);
+      const user = {...req.body, password: hashPassword};
 
-      if(result.lastID) {
+      const result: RunResult = await User.create(user);
+
+      if (result.lastID) {
         const token = generateAccessToken(result.lastID);
         return res.json({ message: 'Пользователь успешно зарегистрирован', result, token });
       }

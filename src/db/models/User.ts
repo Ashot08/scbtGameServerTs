@@ -1,6 +1,6 @@
+import { ISqlite } from 'sqlite';
 import BaseModel from './BaseModel.ts';
 import db from '../index.ts';
-import {ISqlite} from "sqlite";
 import RunResult = ISqlite.RunResult;
 
 export interface SignUpData {
@@ -21,29 +21,25 @@ export interface LogInData {
 }
 class User extends BaseModel {
   async create(data: SignUpData): Promise<RunResult> {
-
     const {
       name, username, email, password,
     } = data;
-    return await db.run(
+    return db.run(
       'INSERT INTO users (name, username, email, password) VALUES (?, ?, ?, ?)',
       [name, username, email, password],
     );
-
   }
 
   update = undefined;
 
-  async read (options: ReadOptions) {
-    if(options.hasOwnProperty('username' )){
-      return await db.get(
-        'SELECT * FROM users WHERE username = ?', options.username
-      );
+  async read(options: ReadOptions) {
+    if (options.hasOwnProperty('username')) {
+      return db.get('SELECT * FROM users WHERE username = ?', options.username);
     }
-    return await db.all(
-      'SELECT * FROM users'
+    return db.all(
+      'SELECT * FROM users',
     );
-  };
+  }
 
   delete = undefined;
 }

@@ -10,9 +10,10 @@ export interface SignUpData {
   password: string;
 }
 export interface ReadOptions {
-  ids?: Array <number>;
+  ids?: Array <number>,
   username?: string,
   email?: string,
+  id?: number,
 }
 
 export interface LogInData {
@@ -35,6 +36,9 @@ class User extends BaseModel {
   async read(options: ReadOptions) {
     if (options.hasOwnProperty('username')) {
       return db.get('SELECT * FROM users WHERE username = ?', options.username);
+    }
+    if (options.hasOwnProperty('id')) {
+      return db.get('SELECT * FROM users WHERE id = ?', options.id);
     }
     return db.all(
       'SELECT * FROM users',

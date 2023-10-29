@@ -52,7 +52,10 @@ class AuthController {
       const alreadyExistUser = await User.read({ username });
 
       if (alreadyExistUser?.id) {
-        return res.json({ message: 'Пользователь уже существует' });
+        return res.json({
+          message: `Пользователь с логином "${username}" уже существует`,
+          status: 'error',
+        });
       }
 
       const hashPassword = bcrypt.hashSync(password, 5);

@@ -70,6 +70,7 @@
         e.preventDefault();
         if (input.value) {
             socket.emit('chat message', input.value);
+            socket.emit('join_game', input.value);
             input.value = '';
         }
     });
@@ -81,7 +82,9 @@
         window.scrollTo(0, document.body.scrollHeight);
         socket.auth.serverOffset = serverOffset;
     });
-
+    socket.on('added_to_game', (msg) => {
+        console.log(msg)
+    });
 
 
 

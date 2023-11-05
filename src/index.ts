@@ -2,12 +2,12 @@ import express, { Response, Request } from 'express';
 import { createServer } from 'node:http';
 import { join } from 'node:path';
 import { Server } from 'socket.io';
-// import './db/index.ts'; // database initialize
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
 import cors from 'cors';
-import db from './db/index.ts';
+import db from './db/index.ts'; // database initialize
 import { authRouter } from './routes/authRouter.ts';
+import { gameRouter } from './routes/gameRouter.ts';
 
 const app = express();
 app.use(cors());
@@ -18,6 +18,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use('/auth', authRouter);
+app.use('/game', gameRouter);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -36,6 +37,7 @@ io.on('connection', async (socket) => {
   socket.on('disconnect', () => {
     console.log('user disconnected');
   });
+
   socket.on('chat message', async (msg) => {
     let result: any;
     try {
@@ -51,6 +53,32 @@ io.on('connection', async (socket) => {
     console.log(`message: ${msg}`);
     // socket.broadcast.emit('new message', msg);
     io.emit('new message', msg);
+  });
+
+  socket.on('connecting_to_game', async (gameId, userId) => {
+    // get game from DB by id;
+    // if player in game join player to room with gameId;
+    // if not - send error;
+    console.log(gameId);
+    console.log(userId);
+  });
+
+  socket.on('join_game', async (gameId, userId) => {
+    // get game from DB by id;
+    // if game exists;
+    // if not - send error;
+    // check is game available (status, players count);
+    // if not - send error;
+    // add player to game in DB;
+    // add socketId to room = gameId
+
+    // socket.join(gameId);
+    // state.games[gameId].push(socket.id);
+    // io.to(gameId).emit('added_to_game', `added ${socket.id}`);
+    console.log(gameId);
+    console.log(userId);
+    socket.join('my_room');
+    io.to('my_room').emit('added_to_game', `added ${socket.id}`);
   });
 
   if (!socket.recovered) {

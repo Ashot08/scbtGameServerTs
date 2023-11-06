@@ -21,9 +21,18 @@ class GameController {
 
       const result: RunResult = await Game.create(game);
 
-      if (result.lastID) {
-        return res.json({ message: 'Игра успешно создана', result });
+      if (!result.lastID) {
+        return res.status(400).json({ message: 'Game Creation error'});
       }
+
+      const joinPlayerResult = await Game.joinPlayer({gameId: result.lastID, playerId: req.body.moderator});
+
+      if(!joinPlayerResult.lastID) {
+        return res.status(400).json({ message: 'Join Player error'});
+      }
+
+      return res.json({ message: 'Игра успешно создана', result });
+
     } catch (e) {
       return res.status(400).json({ message: 'Game Creation error', e });
     }

@@ -17,6 +17,11 @@ export interface GameReadOptions {
   moderatorId?: number,
 }
 
+export interface JoinPlayerData {
+  playerId: number,
+  gameId: number,
+}
+
 class Game extends BaseModel {
   async create(data: CreateGameData): Promise<RunResult> {
     const {
@@ -46,6 +51,17 @@ class Game extends BaseModel {
     }
     return db.all(
       'SELECT * FROM games',
+    );
+  }
+
+  async joinPlayer(data: JoinPlayerData) {
+    const {gameId, playerId} = data;
+    return db.run(
+      `INSERT INTO 
+            games_players (game_id, player_id) 
+            VALUES (?, ?)
+      `,
+      [gameId, playerId],
     );
   }
 

@@ -53,6 +53,12 @@
     <div class="result_block"></div>
 </form>
 
+<form action="">
+    <button type="button" id="get_game_state">GET STATE</button>
+    <div class="result_block"></div>
+</form>
+
+
 
 <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 <script>
@@ -138,6 +144,21 @@
             method: 'GET',
             headers: {
                 'authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MjAsImlhdCI6MTY5ODQ3MzUxOSwiZXhwIjoxNjk4NTU5OTE5fQ.qxV_VzGippVJC4og4YMhSG2LfV1j9YUzxUKMHEz2OtQ',
+                'Content-Type': 'application/json;charset=utf-8',
+            },
+        }).then(res => res.json()).then(res => {
+            resultBlock.textContent = res.message;
+        })
+    })
+
+    document.querySelector('#get_game_state').addEventListener('click', function(e){
+
+        const resultBlock = this.closest('form').querySelector('.result_block');
+        resultBlock.textContent = 'Loading...';
+        fetch('http://localhost:3001/game/game_state/15', {
+            method: 'GET',
+            headers: {
+                'authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNjk5Mjc2MzkzLCJleHAiOjE2OTkzNjI3OTN9.tcRXzRujsIizMWkQbeZfiC_MuEOBk6eRA3p51157ZvI',
                 'Content-Type': 'application/json;charset=utf-8',
             },
         }).then(res => res.json()).then(res => {

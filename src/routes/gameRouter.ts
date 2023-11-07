@@ -13,3 +13,4 @@ gameRouter.post('/create', [
 
 gameRouter.get('/games', AuthMiddleware, GameController.getGames);
 gameRouter.get('/game/:id', AuthMiddleware, GameController.getGame);
+//gameRouter.get('/game_state/:id', AuthMiddleware, GameController.getGameState);

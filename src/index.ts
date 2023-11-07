@@ -8,11 +8,17 @@ import cors from 'cors';
 import db from './db/index.ts'; // database initialize
 import { authRouter } from './routes/authRouter.ts';
 import { gameRouter } from './routes/gameRouter.ts';
+import GameController from './controllers/GameController.ts';
 
 const app = express();
 app.use(cors());
 const server = createServer(app);
-const io = new Server(server);
+const io = new Server(server, {
+  cors: {
+    origin: 'http://localhost:5173',
+    methods: ['GET', 'POST'],
+  },
+});
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -53,6 +59,19 @@ io.on('connection', async (socket) => {
     console.log(`message: ${msg}`);
     // socket.broadcast.emit('new message', msg);
     io.emit('new message', msg);
+  });
+
+  socket.on('get_state', async (gameId) => {
+    const state = await GameController.getGameState(gameId);
+    io.emit('update_state', state);
+  });
+
+  socket.on('join_game', async (gameId, userId) => {
+    const joinResult = await GameController.joinPlayerToGame(gameId, userId);
+    if (joinResult.lastID) {
+      const state = await GameController.getGameState(gameId);
+      io.emit('update_state', state);
+    }
   });
 
   socket.on('connecting_to_game', async (gameId, userId) => {

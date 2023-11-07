@@ -55,7 +55,7 @@ class Game extends BaseModel {
   }
 
   async joinPlayer(data: JoinPlayerData) {
-    const {gameId, playerId} = data;
+    const { gameId, playerId } = data;
     return db.run(
       `INSERT INTO 
             games_players (game_id, player_id) 
@@ -63,6 +63,19 @@ class Game extends BaseModel {
       `,
       [gameId, playerId],
     );
+  }
+
+  async getPlayersByGameId(options: GameReadOptions) {
+    if (options.hasOwnProperty('id')) {
+      return db.all(
+        `SELECT u.id, u.username, u.name, u.email 
+        FROM games_players as g
+        JOIN users as u ON u.id = g.player_id
+        WHERE g.game_id = ?`,
+        options.id,
+      );
+    }
+    return [];
   }
 
   delete = undefined;

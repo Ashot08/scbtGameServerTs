@@ -17,6 +17,10 @@ export interface GameReadOptions {
   moderatorId?: number,
 }
 
+export interface JoinGameOptions {
+  playerId: number,
+  gameId: number,
+}
 class Game extends BaseModel {
   async create(data: CreateGameData): Promise<RunResult> {
     const {
@@ -46,6 +50,26 @@ class Game extends BaseModel {
     }
     return db.all(
       'SELECT * FROM games',
+    );
+  }
+
+  async joinGame(data:JoinGameOptions) {
+    const {
+      playerId,
+      gameId,
+    } = data;
+    return db.run(
+      `INSERT INTO 
+            games (user_id, game_id) 
+            VALUES (?, ?)
+      `,
+      [playerId, gameId],
+    );
+  }
+
+  async getPlayers(gameId: number) {
+    return db.all(
+      'SELECT * FROM games_players WHERE game_id = ?', gameId
     );
   }
 

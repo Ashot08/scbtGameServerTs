@@ -2,7 +2,7 @@ import { ISqlite } from 'sqlite';
 import { validationResult } from 'express-validator';
 import RunResult = ISqlite.RunResult;
 
-import Game from '../db/models/Game.ts';
+import Game, {JoinGameOptions} from '../db/models/Game.ts';
 
 class GameController {
   async createGame(req: any, res: any) {
@@ -50,6 +50,37 @@ class GameController {
     } catch (e) {
       return res.status(400).json({ message: 'Get Game error' });
     }
+  }
+
+  async joinGame(data: JoinGameOptions) {
+    const {
+      playerId,
+      gameId,
+    } = data;
+
+    const game = await Game.read({ id: gameId });
+    const players = await Game.getPlayers(gameId);
+
+    if(game.status !== 'created') {
+      return {status: 'error', message: 'Игру уже началась, к ней нельзя присоединиться'}
+    }
+
+    if(players.length >= game.playersCount ) {
+      return {status: 'error', message: 'Все места в игре заняты'}
+    }
+
+    if(game.moderatorMode && game.moderator === playerId) {
+      return {status: 'error', message: 'Игрок находится в режиме модератора, он не может принимать участие в игре'}
+    }
+
+    const result = await Game.joinGame(data);
+
+    if(result.lastID) {
+      return {status: 'success', message: 'Игрок успешно добавлен в игру'}
+    }
+
+    return {status: 'error', message: 'Игрок не добавлен в игру'}
+
   }
 }
 

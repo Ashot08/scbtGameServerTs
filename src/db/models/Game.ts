@@ -60,21 +60,32 @@ class Game extends BaseModel {
     } = data;
     return db.run(
       `INSERT INTO 
-            games (user_id, game_id) 
+            games_players (player_id, game_id) 
             VALUES (?, ?)
       `,
       [playerId, gameId],
     );
   }
 
-  async getPlayers(gameId: number) {
-    return db.all(
-      'SELECT * FROM games_players WHERE game_id = ?', gameId
-    );
+  async getPlayersByGameId(options: GameReadOptions) {
+    if (options.hasOwnProperty('id')) {
+      return db.all(
+        `SELECT u.id, u.username, u.name, u.email 
+        FROM games_players as g
+        JOIN users as u ON u.id = g.player_id
+        WHERE g.game_id = ? ORDER BY u.id ASC`,
+        options.id,
+      );
+    }
+    return [];
   }
 
-  async getState(gameId: number) {
+  async getPlayers(gameId: number) {
+    return db.all('SELECT * FROM games_players WHERE game_id = ? ORDER BY id ASC', gameId);
+  }
 
+  async getTurns(gameId: number) {
+    return db.all('SELECT * FROM turns WHERE game_id = ? ORDER BY id ASC', gameId);
   }
 
   delete = undefined;

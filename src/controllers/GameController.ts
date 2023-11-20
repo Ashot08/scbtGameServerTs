@@ -2,7 +2,7 @@ import { ISqlite } from 'sqlite';
 import { validationResult } from 'express-validator';
 import RunResult = ISqlite.RunResult;
 
-import Game, {JoinGameOptions} from '../db/models/Game.ts';
+import Game, { JoinGameOptions } from '../db/models/Game.ts';
 
 class GameController {
   async createGame(req: any, res: any) {
@@ -61,35 +61,45 @@ class GameController {
     const game = await Game.read({ id: gameId });
     const players = await Game.getPlayers(gameId);
 
-    if(game.status !== 'created') {
-      return {status: 'error', message: 'Игру уже началась, к ней нельзя присоединиться'}
+    console.log(game);
+
+    for(const player of players) {
+      if (player.player_id === playerId) {
+        return { status: 'error', message: 'Игрок уже в игре' };
+      }
     }
 
-    if(players.length >= game.playersCount ) {
-      return {status: 'error', message: 'Все места в игре заняты'}
+    if (game.status !== 'created') {
+      return { status: 'error', message: 'Игра уже началась, к ней нельзя присоединиться' };
     }
 
-    if(game.moderatorMode && game.moderator === playerId) {
-      return {status: 'error', message: 'Игрок находится в режиме модератора, он не может принимать участие в игре'}
+    if (players.length >= game.playersCount) {
+      return { status: 'error', message: 'Все места в игре заняты' };
+    }
+
+    if (game.moderatorMode && game.moderator === playerId) {
+      return { status: 'error', message: 'Игрок в режиме модератора не может участвовать в игре' };
     }
 
     const result = await Game.joinGame(data);
 
-    if(result.lastID) {
-      return {status: 'success', message: 'Игрок успешно добавлен в игру'}
+    if (result.lastID) {
+      return { status: 'success', message: 'Игрок успешно добавлен в игру' };
     }
 
-    return {status: 'error', message: 'Игрок не добавлен в игру'}
-
+    return { status: 'error', message: 'Игрок не добавлен в игру' };
   }
 
   async getState(gameId: number) {
     const game = await Game.read({ id: gameId });
-    const players = await Game.getPlayers(gameId);
+    const players = await Game.getPlayersByGameId({ id: gameId });
     const turns = await Game.getTurns(gameId);
-    const rolls = await Game.getTurns(gameId);
 
-    return {game};
+    return {
+      game,
+      players,
+      turns,
+    };
   }
 }
 

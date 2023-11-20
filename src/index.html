@@ -59,7 +59,11 @@
     const socket = io({
         auth: {
             serverOffset: 0
+        },
+        query: {
+            gameId: 1,
         }
+
     });
 
     const form = document.getElementById('form');
@@ -69,20 +73,21 @@
     form.addEventListener('submit', (e) => {
         e.preventDefault();
         if (input.value) {
-            socket.emit('chat message', input.value);
-            socket.emit('join_game', input.value);
+            //socket.emit('chat message', input.value);
+            socket.emit('game:join',
+                {
+                    playerId: 1,
+                    gameId: 1
+                }
+            );
             input.value = '';
         }
     });
 
-    socket.on('chat message', (msg, serverOffset) => {
-        const item = document.createElement('li');
-        item.textContent = msg;
-        messages.appendChild(item);
-        window.scrollTo(0, document.body.scrollHeight);
-        socket.auth.serverOffset = serverOffset;
+    socket.on('game:updateState', (msg) => {
+        console.log(msg)
     });
-    socket.on('added_to_game', (msg) => {
+    socket.on('notification', (msg) => {
         console.log(msg)
     });
 

@@ -73,6 +73,10 @@ class Game extends BaseModel {
     );
   }
 
+  async getState(gameId: number) {
+
+  }
+
   delete = undefined;
 }
 

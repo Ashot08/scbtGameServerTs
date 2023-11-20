@@ -82,6 +82,15 @@ class GameController {
     return {status: 'error', message: 'Игрок не добавлен в игру'}
 
   }
+
+  async getState(gameId: number) {
+    const game = await Game.read({ id: gameId });
+    const players = await Game.getPlayers(gameId);
+    const turns = await Game.getTurns(gameId);
+    const rolls = await Game.getTurns(gameId);
+
+    return {game};
+  }
 }
 
 export default new GameController();

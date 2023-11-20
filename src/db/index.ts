@@ -53,6 +53,8 @@ await db.exec(`
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       game_id INTEGER,
       player_id INTEGER,
+      shift INTEGER,
+      // current TEXT,
       FOREIGN KEY (game_id) REFERENCES games (id) ON UPDATE CASCADE ON DELETE CASCADE
   );
 `);

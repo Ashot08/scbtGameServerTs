@@ -8,6 +8,7 @@ import cors from 'cors';
 import db from './db/index.ts'; // database initialize
 import { authRouter } from './routes/authRouter.ts';
 import { gameRouter } from './routes/gameRouter.ts';
+import gameHandler from "./ws/handlers/gameHandler.ts";
 
 const app = express();
 app.use(cors());
@@ -34,25 +35,24 @@ server.listen(3001, () => {
 
 io.on('connection', async (socket) => {
   console.log('a user connected');
+
+  const { gameId } = socket.handshake.query;
+  // сохраняем название комнаты в соответствующем свойстве сокета
+  socket.roomId = gameId;
+
+  // присоединяемся к комнате
+  socket.join(gameId as string | string[]);
+
+  gameHandler(io, socket);
+
+
   socket.on('disconnect', () => {
     console.log('user disconnected');
+    socket.leave(gameId as string);
   });
 
   socket.on('chat message', async (msg) => {
-    let result: any;
-    try {
-      // store the message in the database
-      result = await db.run('INSERT INTO messages (content) VALUES (?)', msg);
-    } catch (e) {
-      // TODO handle the failure
-      return;
-    }
-    // include the offset with the message
-    io.emit('chat message', msg, result.lastID);
-
-    console.log(`message: ${msg}`);
-    // socket.broadcast.emit('new message', msg);
-    io.emit('new message', msg);
+      await db.run('INSERT INTO messages (content) VALUES (?)', msg);
   });
 
   socket.on('connecting_to_game', async (gameId, userId) => {
@@ -81,32 +81,4 @@ io.on('connection', async (socket) => {
     io.to('my_room').emit('added_to_game', `added ${socket.id}`);
   });
 
-  if (!socket.recovered) {
-    // if the connection state recovery was not successful
-    try {
-      // await db.each(
-      //   'SELECT id, content FROM messages WHERE id > ?',
-      //   [socket.handshake.auth.serverOffset || 0],
-      //   (_err, row) => {
-      //     socket.emit('chat message', row.content, row.id);
-      //   },
-      // );
-      await db.each(
-        'SELECT * FROM users WHERE id > ?',
-        [socket.handshake.auth.serverOffset || 0],
-        (_err, row) => {
-          socket.emit(
-            'chat message',
-            `
-            ${row.username} - 
-            ${row.name} - 
-            ${row.id} 
-            `,
-          );
-        },
-      );
-    } catch (e) {
-      // something went wrong
-    }
-  }
 });

@@ -88,6 +88,10 @@ class Game extends BaseModel {
     return db.all('SELECT * FROM turns WHERE game_id = ? ORDER BY id ASC', gameId);
   }
 
+  async updateStatus(status: GameStatus, gameId: number) {
+    return db.run("UPDATE games SET status = ? WHERE id = ?", status, gameId);
+  }
+
   delete = undefined;
 }
 

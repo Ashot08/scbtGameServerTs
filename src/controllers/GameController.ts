@@ -62,8 +62,6 @@ class GameController {
       const game = await Game.read({ id: gameId });
       const players = await Game.getPlayers(gameId);
 
-      console.log('length ', players.length, 'count ', game.playersCount);
-
       for (const player of players) {
         if (player.player_id === playerId) {
           return { status: 'error', message: 'Игрок уже в игре' };
@@ -95,9 +93,14 @@ class GameController {
 
   async getState(gameId: number) {
     try {
-      const game = await Game.read({ id: gameId });
+      let game = await Game.read({ id: gameId });
       const players = await Game.getPlayersByGameId({ id: gameId });
       const turns = await Game.getTurns(gameId);
+
+      if( (players.length === game.players_count) && (game.status === 'created') ) {
+        await Game.updateStatus('in_process', gameId);
+        game = await Game.read({ id: gameId });
+      }
 
       return {
         status: 'success',

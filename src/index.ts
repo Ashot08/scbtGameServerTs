@@ -13,7 +13,12 @@ import gameHandler from './ws/handlers/gameHandler.ts';
 const app = express();
 app.use(cors());
 const server = createServer(app);
-const io = new Server(server);
+const io = new Server(server, {
+  cors: {
+    origin: 'http://localhost:5173',
+    methods: ['GET', 'POST'],
+  },
+});
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -36,18 +41,18 @@ server.listen(3001, () => {
 io.on('connection', async (socket: any) => {
   console.log('a user connected');
 
-  const { gameId } = socket.handshake.query;
+  const { roomId } = socket.handshake.query;
   // сохраняем название комнаты в соответствующем свойстве сокета
-  socket.roomId = gameId;
+  socket.roomId = roomId;
 
   // присоединяемся к комнате
-  socket.join(gameId as string | string[]);
+  socket.join(roomId as string | string[]);
 
   gameHandler(io, socket);
 
   socket.on('disconnect', () => {
     console.log('user disconnected');
-    socket.leave(gameId as string);
+    socket.leave(roomId as string);
   });
 
   socket.on('chat message', async () => {

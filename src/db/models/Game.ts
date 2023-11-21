@@ -103,6 +103,16 @@ class Game extends BaseModel {
     );
   }
 
+  async createRoll(turnId: number, resultId: number): Promise<RunResult> {
+    return db.run(
+      `INSERT INTO 
+            rolls (turn_id, result_id) 
+            VALUES (?, ?)
+      `,
+      [turnId, resultId],
+    );
+  }
+
   delete = undefined;
 }
 

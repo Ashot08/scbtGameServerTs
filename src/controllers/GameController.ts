@@ -3,6 +3,7 @@ import { validationResult } from 'express-validator';
 import RunResult = ISqlite.RunResult;
 
 import Game, { JoinGameOptions } from '../db/models/Game.ts';
+import { getRandomNumber } from '../utils/getRandomNumber.ts';
 
 class GameController {
   async createGame(req: any, res: any) {
@@ -114,6 +115,31 @@ class GameController {
       };
     } catch (e) {
       return { status: 'error', message: 'Состояние игры не получено' };
+    }
+  }
+
+  async createRoll(gameId: number) {
+    try {
+      const turns = await Game.getTurns(gameId);
+
+      if (!Array.isArray(turns) || !turns.length) {
+        return { status: 'error', message: 'Ходов пока не было' };
+      }
+      const lastTurn = turns.slice(-1)[0];
+      const prizeNumber = getRandomNumber();
+
+      const result = await Game.createRoll(lastTurn.id, prizeNumber);
+
+      if (result.lastID) {
+        return {
+          status: 'success',
+          message: 'Вращение успешно создано',
+          result: { lastTurn, prizeNumber },
+        };
+      }
+      return { status: 'error', message: 'Ошибка при создании вращения' };
+    } catch (e) {
+      return { status: 'error', message: 'Ошибка при создании вращения' };
     }
   }
 }

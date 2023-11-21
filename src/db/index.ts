@@ -63,7 +63,7 @@ await db.exec(`
   CREATE TABLE IF NOT EXISTS rolls (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       turn_id INTEGER,
-      result TEXT,
+      result_id INTEGER,
       FOREIGN KEY (turn_id) REFERENCES turns (id) ON UPDATE CASCADE ON DELETE CASCADE 
   );
 `);

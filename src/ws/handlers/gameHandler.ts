@@ -15,10 +15,31 @@ export default (io: any, socket: any) => {
   }
 
   async function getState() {
-    const gameState = await GameController.getState(socket.roomId);
-    io.to(socket.roomId).emit('game:updateState', gameState);
+    try {
+      const gameState = await GameController.getState(socket.roomId);
+      io.to(socket.roomId).emit('game:updateState', gameState);
+    } catch (e) {
+      console.log(e);
+    }
+  }
+
+  async function roll() {
+    try {
+      const result = await GameController.createRoll(socket.roomId);
+
+      if (!result) throw new Error('Create Roll error');
+
+      if (result.status === 'success') {
+        socket.emit('notification', result);
+      } else {
+        socket.emit('notification', result);
+      }
+    } catch (e) {
+      socket.emit('notification', { status: 'error', message: 'Create Roll error' });
+    }
   }
 
   socket.on('game:join', joinGame);
   socket.on('game:getState', getState);
+  socket.on('game:create_roll', roll);
 };

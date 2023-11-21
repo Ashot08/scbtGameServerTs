@@ -58,48 +58,59 @@ class GameController {
       gameId,
     } = data;
 
-    const game = await Game.read({ id: gameId });
-    const players = await Game.getPlayers(gameId);
+    try {
+      const game = await Game.read({ id: gameId });
+      const players = await Game.getPlayers(gameId);
 
-    console.log(game);
+      console.log('length ', players.length, 'count ', game.playersCount);
 
-    for(const player of players) {
-      if (player.player_id === playerId) {
-        return { status: 'error', message: 'Игрок уже в игре' };
+      for (const player of players) {
+        if (player.player_id === playerId) {
+          return { status: 'error', message: 'Игрок уже в игре' };
+        }
       }
+
+      if (game.status !== 'created') {
+        return { status: 'error', message: 'Игра уже началась, к ней нельзя присоединиться' };
+      }
+
+      if (players.length >= game.players_count) {
+        return { status: 'error', message: 'Все места в игре заняты' };
+      }
+
+      if (game.moderatorMode && game.moderator === playerId) {
+        return { status: 'error', message: 'Игрок в режиме модератора не может участвовать' };
+      }
+
+      const result = await Game.joinGame(data);
+
+      if (result.lastID) {
+        return { status: 'success', message: 'Игрок успешно добавлен в игру' };
+      }
+    } catch (e) {
+      return { status: 'error', message: 'Игрок не добавлен в игру', e };
     }
-
-    if (game.status !== 'created') {
-      return { status: 'error', message: 'Игра уже началась, к ней нельзя присоединиться' };
-    }
-
-    if (players.length >= game.playersCount) {
-      return { status: 'error', message: 'Все места в игре заняты' };
-    }
-
-    if (game.moderatorMode && game.moderator === playerId) {
-      return { status: 'error', message: 'Игрок в режиме модератора не может участвовать в игре' };
-    }
-
-    const result = await Game.joinGame(data);
-
-    if (result.lastID) {
-      return { status: 'success', message: 'Игрок успешно добавлен в игру' };
-    }
-
     return { status: 'error', message: 'Игрок не добавлен в игру' };
   }
 
   async getState(gameId: number) {
-    const game = await Game.read({ id: gameId });
-    const players = await Game.getPlayersByGameId({ id: gameId });
-    const turns = await Game.getTurns(gameId);
+    try {
+      const game = await Game.read({ id: gameId });
+      const players = await Game.getPlayersByGameId({ id: gameId });
+      const turns = await Game.getTurns(gameId);
 
-    return {
-      game,
-      players,
-      turns,
-    };
+      return {
+        status: 'success',
+        message: 'Состояние игры получено',
+        state: {
+          game,
+          players,
+          turns,
+        },
+      };
+    } catch (e) {
+      return { status: 'error', message: 'Состояние игры не получено' };
+    }
   }
 }
 

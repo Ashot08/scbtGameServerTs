@@ -5,11 +5,12 @@ export default (io: any, socket: any) => {
   async function joinGame(data: JoinGameOptions) {
     const result = await GameController.joinGame(data);
     if (result.status === 'success') {
-      const gameState = GameController.getState(socket.roomId);
+      const gameState = await GameController.getState(socket.roomId);
+      console.log(gameState);
       io.to(socket.roomId).emit('game:updateState', gameState);
-      io.to(socket.roomId).emit('notification', result);
+      socket.emit('notification', result);
     } else {
-      io.to(socket.roomId).emit('notification', result);
+      socket.emit('notification', result);
     }
   }
 

@@ -97,8 +97,9 @@ class GameController {
       const players = await Game.getPlayersByGameId({ id: gameId });
       const turns = await Game.getTurns(gameId);
 
-      if( (players.length === game.players_count) && (game.status === 'created') ) {
+      if ((players.length === game.players_count) && (game.status === 'created')) {
         await Game.updateStatus('in_process', gameId);
+        await Game.createTurn(gameId, players[0].id, 1);
         game = await Game.read({ id: gameId });
       }
 

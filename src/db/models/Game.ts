@@ -29,13 +29,14 @@ class Game extends BaseModel {
       playersCount,
       moderator,
       creationDate,
+      moderatorMode,
     } = data;
     return db.run(
       `INSERT INTO 
-            games (title, status, players_count, moderator, creation_date) 
-            VALUES (?, ?, ?, ?, ?)
+            games (title, status, players_count, moderator, creation_date, moderator_mode) 
+            VALUES (?, ?, ?, ?, ?, ?)
       `,
-      [title, status, playersCount, moderator, creationDate],
+      [title, status, playersCount, moderator, creationDate, moderatorMode],
     );
   }
 
@@ -89,7 +90,17 @@ class Game extends BaseModel {
   }
 
   async updateStatus(status: GameStatus, gameId: number) {
-    return db.run("UPDATE games SET status = ? WHERE id = ?", status, gameId);
+    return db.run('UPDATE games SET status = ? WHERE id = ?', status, gameId);
+  }
+
+  async createTurn(gameId: number, playerId: number, shift: number): Promise<RunResult> {
+    return db.run(
+      `INSERT INTO 
+            turns (game_id, player_id, shift) 
+            VALUES (?, ?, ?)
+      `,
+      [gameId, playerId, shift],
+    );
   }
 
   delete = undefined;

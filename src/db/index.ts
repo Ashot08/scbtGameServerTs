@@ -34,7 +34,8 @@ await db.exec(`
       moderator INTEGER,
       creation_date TEXT,
       start_date TEXT,
-      end_date TEXT
+      end_date TEXT,
+      moderator_mode TEXT
   );
 `);
 

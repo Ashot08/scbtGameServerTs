@@ -15,8 +15,8 @@ export default (io: any, socket: any) => {
   }
 
   async function getState() {
-      const gameState = await GameController.getState(socket.roomId);
-      io.to(socket.roomId).emit('game:updateState', gameState);
+    const gameState = await GameController.getState(socket.roomId);
+    io.to(socket.roomId).emit('game:updateState', gameState);
   }
 
   socket.on('game:join', joinGame);

@@ -21,6 +21,16 @@ export interface JoinGameOptions {
   playerId: number,
   gameId: number,
 }
+
+export interface AnswerOptions {
+  turnId: number,
+  gameId: number,
+  playerId: number,
+  rollId: number,
+  questionId: number,
+  isCountable: 'true' | 'false',
+  status: 'error' | 'success' | 'in_process',
+}
 class Game extends BaseModel {
   async create(data: CreateGameData): Promise<RunResult> {
     const {
@@ -111,6 +121,40 @@ class Game extends BaseModel {
       `,
       [turnId, resultId],
     );
+  }
+
+  async getRolls(turnId: number) {
+    return db.all('SELECT * FROM rolls WHERE turn_id = ? ORDER BY id ASC', turnId);
+  }
+
+  async createAnswer(options: AnswerOptions): Promise<RunResult> {
+    const {
+      turnId,
+      gameId,
+      playerId,
+      rollId,
+      questionId,
+      isCountable,
+      status,
+    } = options;
+    return db.run(
+      `INSERT INTO 
+            answers (turn_id, game_id, player_id, roll_id, question_id, is_countable, status) 
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+      `,
+      [turnId, gameId, playerId, rollId, questionId, isCountable, status],
+    );
+  }
+
+  async updateAnswerStatus(status: 'error' | 'success' | 'in_process', answerId: number) {
+    return db.run(`UPDATE answers SET status = ? 
+        WHERE id = ?`, status, answerId);
+  }
+
+  async getAnswersInProcess(gameId: number) {
+    return db.all(`SELECT * FROM answers 
+        WHERE game_id = ? AND status = in_process 
+        ORDER BY id ASC`, gameId);
   }
 
   delete = undefined;

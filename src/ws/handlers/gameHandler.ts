@@ -56,8 +56,24 @@ export default (io: any, socket: any) => {
     }
   }
 
+  async function startAnswers() {
+    try {
+      const result = await GameController.createAnswers(socket.roomId);
+      if (!result) throw new Error('Create Answers error');
+
+      if (result.status === 'success') {
+        socket.emit('notification', result);
+      } else {
+        socket.emit('notification', result);
+      }
+    } catch (e) {
+      socket.emit('notification', { status: 'error', message: 'Create Answers error' });
+    }
+  }
+
   socket.on('game:join', joinGame);
   socket.on('game:getState', getState);
   socket.on('game:create_roll', roll);
   socket.on('game:create_turn', createTurn);
+  socket.on('game:start_answers', startAnswers);
 };

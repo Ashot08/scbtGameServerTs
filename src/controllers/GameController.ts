@@ -4,7 +4,7 @@ import RunResult = ISqlite.RunResult;
 
 import Game, { JoinGameOptions } from '../db/models/Game.ts';
 import { getRandomNumber } from '../utils/getRandomNumber.ts';
-import {getNextTurn} from "../utils/getNextTurn.ts";
+import { getNextTurn } from '../utils/getNextTurn.ts';
 
 class GameController {
   async createGame(req: any, res: any) {
@@ -154,7 +154,7 @@ class GameController {
       }
       const lastTurn = turns.slice(-1)[0];
 
-      const {playerId, nextShift} = getNextTurn(lastTurn.player_id, players, turns);
+      const { playerId, nextShift } = getNextTurn(lastTurn.player_id, players, turns);
 
       const result = await Game.createTurn(gameId, playerId, nextShift);
 
@@ -168,6 +168,56 @@ class GameController {
       return { status: 'error', message: 'Ошибка при создании хода' };
     } catch (e) {
       return { status: 'error', message: 'Ошибка при создании хода' };
+    }
+  }
+
+  async createAnswers(gameId: number) {
+    try {
+      const turns = await Game.getTurns(gameId);
+      const players = await Game.getPlayersByGameId({ id: gameId });
+
+      if (!Array.isArray(turns) || !Array.isArray(players) || !players.length || !turns.length) {
+        return { status: 'error', message: 'Ошибка создания ответов' };
+      }
+      const lastTurn = turns.slice(-1)[0];
+
+      const rolls = await Game.getRolls(lastTurn.id);
+
+      if (!Array.isArray(rolls) || !rolls.length) {
+        return { status: 'error', message: 'Ошибка создания ответов' };
+      }
+
+      const lastRoll = rolls.slice(-1)[0];
+
+      const questionNumber = Math.floor(Math.random() * 180);
+
+      let result = null;
+
+      for (const player of players) {
+        const isCountable: 'true' | 'false' = (player.id === lastTurn.player_id) ? 'false' : 'true';
+
+        // eslint-disable-next-line no-await-in-loop
+        result = await Game.createAnswer({
+          turnId: lastTurn.id,
+          gameId,
+          playerId: player.id,
+          rollId: lastRoll.id,
+          questionId: questionNumber,
+          isCountable,
+          status: 'in_process',
+        });
+      }
+
+      if (result?.lastID) {
+        return {
+          status: 'success',
+          message: 'Ответы успешно созданы',
+          result: { result },
+        };
+      }
+      return { status: 'error', message: 'Ошибка при создании ответов' };
+    } catch (e) {
+      return { status: 'error', message: 'Ошибка при создании ответов' };
     }
   }
 }

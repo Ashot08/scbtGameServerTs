@@ -6,13 +6,13 @@ export function getNextTurn(lastTurnPlayerId: number, players: any, turns: any) 
 
   // find next player
 
-  for(let i = 0; i < players.length; i++) {
-    if(players[i].id === lastTurnPlayerId) {
+  for (let i = 0; i < players.length; i += 1) {
+    if (players[i].id === lastTurnPlayerId) {
       newPlayerIndex = i + 1;
     }
   }
 
-  if(newPlayerIndex === players.length) {
+  if (newPlayerIndex === players.length) {
     newPlayerIndex = 0;
   }
 
@@ -20,14 +20,11 @@ export function getNextTurn(lastTurnPlayerId: number, players: any, turns: any) 
 
   // calculate shift
 
-  for(let i = 0; i < 99; i++ ) {
-
-    if(coefficient > i) {
+  for (let i = 0; i < 99; i += 1) {
+    if (coefficient > i) {
       nextShift = i + 1;
     }
   }
 
-
-  return {playerId, nextShift}
-
+  return { playerId, nextShift };
 }

@@ -68,4 +68,18 @@ await db.exec(`
   );
 `);
 
+await db.exec(`
+  CREATE TABLE IF NOT EXISTS answers (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      turn_id INTEGER,
+      game_id INTEGER,
+      player_id INTEGER,
+      roll_id INTEGER,
+      question_id INTEGER,
+      is_countable TEXT,
+      status TEXT,
+      FOREIGN KEY (game_id) REFERENCES games (id) ON UPDATE CASCADE ON DELETE CASCADE 
+  );
+`);
+
 export default db;

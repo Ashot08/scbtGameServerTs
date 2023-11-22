@@ -4,6 +4,7 @@ import RunResult = ISqlite.RunResult;
 
 import Game, { JoinGameOptions } from '../db/models/Game.ts';
 import { getRandomNumber } from '../utils/getRandomNumber.ts';
+import {getNextTurn} from "../utils/getNextTurn.ts";
 
 class GameController {
   async createGame(req: any, res: any) {
@@ -140,6 +141,33 @@ class GameController {
       return { status: 'error', message: 'Ошибка при создании вращения' };
     } catch (e) {
       return { status: 'error', message: 'Ошибка при создании вращения' };
+    }
+  }
+
+  async createTurn(gameId: number) {
+    try {
+      const turns = await Game.getTurns(gameId);
+      const players = await Game.getPlayersByGameId({ id: gameId });
+
+      if (!Array.isArray(turns) || !Array.isArray(players) || !players.length || !turns.length) {
+        return { status: 'error', message: 'Ошибка создания хода' };
+      }
+      const lastTurn = turns.slice(-1)[0];
+
+      const {playerId, nextShift} = getNextTurn(lastTurn.player_id, players, turns);
+
+      const result = await Game.createTurn(gameId, playerId, nextShift);
+
+      if (result.lastID) {
+        return {
+          status: 'success',
+          message: 'Ход успешно создан',
+          result: { result },
+        };
+      }
+      return { status: 'error', message: 'Ошибка при создании хода' };
+    } catch (e) {
+      return { status: 'error', message: 'Ошибка при создании хода' };
     }
   }
 }

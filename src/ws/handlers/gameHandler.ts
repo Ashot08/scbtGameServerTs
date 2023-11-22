@@ -30,7 +30,7 @@ export default (io: any, socket: any) => {
       if (!result) throw new Error('Create Roll error');
 
       if (result.status === 'success') {
-        socket.emit('notification', result);
+        io.to(socket.roomId).emit('game:roll', result);
       } else {
         socket.emit('notification', result);
       }
@@ -39,7 +39,25 @@ export default (io: any, socket: any) => {
     }
   }
 
+  async function createTurn() {
+    try {
+      const result = await GameController.createTurn(socket.roomId);
+
+      if (!result) throw new Error('Create Turn error');
+
+      if (result.status === 'success') {
+        const gameState = await GameController.getState(socket.roomId);
+        io.to(socket.roomId).emit('game:updateState', gameState);
+      } else {
+        socket.emit('notification', result);
+      }
+    } catch (e) {
+      socket.emit('notification', { status: 'error', message: 'Create Turn error' });
+    }
+  }
+
   socket.on('game:join', joinGame);
   socket.on('game:getState', getState);
   socket.on('game:create_roll', roll);
+  socket.on('game:create_turn', createTurn);
 };

@@ -18,6 +18,7 @@ class GameController {
       const game = {
         ...req.body,
         status: 'created',
+        answersMode: 'false',
         creationDate: new Date().toJSON(),
       };
 
@@ -98,6 +99,13 @@ class GameController {
       let game = await Game.read({ id: gameId });
       const players = await Game.getPlayersByGameId({ id: gameId });
       const turns = await Game.getTurns(gameId);
+      const answers = await Game.getAnswers(gameId);
+      let lastTurnRolls = [];
+
+      if (Array.isArray(turns) && turns.length) {
+        const lastTurn = turns.slice(-1)[0];
+        lastTurnRolls = await Game.getRolls(lastTurn.id);
+      }
 
       if ((players.length === game.players_count) && (game.status === 'created')) {
         await Game.updateStatus('in_process', gameId);
@@ -112,6 +120,8 @@ class GameController {
           game,
           players,
           turns,
+          answers,
+          lastTurnRolls,
         },
       };
     } catch (e) {
@@ -220,6 +230,45 @@ class GameController {
       return { status: 'error', message: 'Ошибка при создании ответов' };
     }
   }
+
+  async updateAnswerStatus(status: 'error' | 'success' | 'in_process', answerId: number) {
+    try {
+      const result = await Game.updateAnswerStatus(status, answerId);
+      if (result) {
+        return { status: 'success', message: 'Ответ обновлен' };
+      }
+      return { status: 'error', message: 'Ошибка при обновлении ответа' };
+    } catch (e) {
+      return { status: 'error', message: 'Ошибка при обновлении ответа' };
+    }
+  }
+
+  async updateAnswersMode(status: 'true' | 'false', gameId: number) {
+    try {
+      const result = await Game.updateAnswersMode(status, gameId);
+      if (result) {
+        return { status: 'success', message: 'game AnswersMode обновлен' };
+      }
+      return { status: 'error', message: 'Ошибка при обновлении game AnswersMode' };
+    } catch (e) {
+      return { status: 'error', message: 'Ошибка при обновлении game AnswersMode' };
+    }
+  }
+
+  async updateExpiredAnswerStatus(status: 'success' | 'error', gameId: number) {
+    try {
+      const result = await Game.updateExpiredAnswerStatus(status, gameId);
+
+      if(result) {
+        return { status: 'success', message: 'Успех при обновлении ExpiredAnswerStatus' };
+      }
+      return { status: 'error', message: 'Ошибка при обновлении ExpiredAnswerStatus' };
+
+    } catch(e){
+      return { status: 'error', message: 'Ошибка при обновлении ExpiredAnswerStatus' };
+    }
+  }
+
 }
 
 export default new GameController();

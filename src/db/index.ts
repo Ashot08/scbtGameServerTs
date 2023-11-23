@@ -35,7 +35,8 @@ await db.exec(`
       creation_date TEXT,
       start_date TEXT,
       end_date TEXT,
-      moderator_mode TEXT
+      moderator_mode TEXT,
+      answers_mode TEXT
   );
 `);
 

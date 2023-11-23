@@ -10,7 +10,8 @@ export interface CreateGameData {
   playersCount: number,
   moderator: number,
   creationDate: string,
-  moderatorMode: boolean
+  moderatorMode: boolean,
+  answersMode: 'true' | 'false'
 }
 export interface GameReadOptions {
   id?: number,
@@ -40,13 +41,18 @@ class Game extends BaseModel {
       moderator,
       creationDate,
       moderatorMode,
+      answersMode,
     } = data;
     return db.run(
       `INSERT INTO 
-            games (title, status, players_count, moderator, creation_date, moderator_mode) 
-            VALUES (?, ?, ?, ?, ?, ?)
+            games (
+            title, 
+            status, 
+            players_count, 
+            moderator, creation_date, moderator_mode, answers_mode) 
+            VALUES (?, ?, ?, ?, ?, ?, ?)
       `,
-      [title, status, playersCount, moderator, creationDate, moderatorMode],
+      [title, status, playersCount, moderator, creationDate, moderatorMode, answersMode],
     );
   }
 
@@ -103,6 +109,10 @@ class Game extends BaseModel {
     return db.run('UPDATE games SET status = ? WHERE id = ?', status, gameId);
   }
 
+  async updateAnswersMode(status: 'true' | 'false', gameId: number) {
+    return db.run('UPDATE games SET answers_mode = ? WHERE id = ?', status, gameId);
+  }
+
   async createTurn(gameId: number, playerId: number, shift: number): Promise<RunResult> {
     return db.run(
       `INSERT INTO 
@@ -151,9 +161,15 @@ class Game extends BaseModel {
         WHERE id = ?`, status, answerId);
   }
 
-  async getAnswersInProcess(gameId: number) {
+  async updateExpiredAnswerStatus(status: 'error' | 'success' | 'in_process', gameId: number) {
+    return db.run(`UPDATE answers SET status = ? 
+        WHERE game_id = ? 
+        AND status = 'in_process'`, status, gameId);
+  }
+
+  async getAnswers(gameId: number) {
     return db.all(`SELECT * FROM answers 
-        WHERE game_id = ? AND status = in_process 
+        WHERE game_id = ? 
         ORDER BY id ASC`, gameId);
   }
 

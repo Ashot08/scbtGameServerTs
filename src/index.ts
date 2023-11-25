@@ -9,6 +9,7 @@ import db from './db/index.ts'; // database initialize
 import { authRouter } from './routes/authRouter.ts';
 import { gameRouter } from './routes/gameRouter.ts';
 import gameHandler from './ws/handlers/gameHandler.ts';
+import answerHandler from "./ws/handlers/answerHandler.ts";
 
 const app = express();
 app.use(cors());
@@ -49,6 +50,7 @@ io.on('connection', async (socket: any) => {
   socket.join(roomId as string | string[]);
 
   gameHandler(io, socket);
+  answerHandler(io, socket);
 
   socket.on('disconnect', () => {
     console.log('user disconnected');

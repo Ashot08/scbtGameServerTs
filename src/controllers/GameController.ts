@@ -5,6 +5,7 @@ import RunResult = ISqlite.RunResult;
 import Game, { JoinGameOptions } from '../db/models/Game.ts';
 import { getRandomNumber } from '../utils/getRandomNumber.ts';
 import { getNextTurn } from '../utils/getNextTurn.ts';
+import Answer from "../db/models/Answer.ts";
 
 class GameController {
   async createGame(req: any, res: any) {
@@ -99,7 +100,7 @@ class GameController {
       let game = await Game.read({ id: gameId });
       const players = await Game.getPlayersByGameId({ id: gameId });
       const turns = await Game.getTurns(gameId);
-      const answers = await Game.getAnswers(gameId);
+      const answers = await Answer.getAnswers(gameId);
       let lastTurnRolls = [];
 
       if (Array.isArray(turns) && turns.length) {
@@ -126,6 +127,18 @@ class GameController {
       };
     } catch (e) {
       return { status: 'error', message: 'Состояние игры не получено' };
+    }
+  }
+
+  async updateAnswersMode(status: 'true' | 'false', gameId: number) {
+    try {
+      const result = await Game.updateAnswersMode(status, gameId);
+      if (result.changes) {
+        return { status: 'success', message: 'game AnswersMode обновлен' };
+      }
+      return { status: 'error', message: 'Ошибка при обновлении game AnswersMode' };
+    } catch (e) {
+      return { status: 'error', message: 'Ошибка при обновлении game AnswersMode' };
     }
   }
 
@@ -180,95 +193,6 @@ class GameController {
       return { status: 'error', message: 'Ошибка при создании хода' };
     }
   }
-
-  async createAnswers(gameId: number) {
-    try {
-      const turns = await Game.getTurns(gameId);
-      const players = await Game.getPlayersByGameId({ id: gameId });
-
-      if (!Array.isArray(turns) || !Array.isArray(players) || !players.length || !turns.length) {
-        return { status: 'error', message: 'Ошибка создания ответов' };
-      }
-      const lastTurn = turns.slice(-1)[0];
-
-      const rolls = await Game.getRolls(lastTurn.id);
-
-      if (!Array.isArray(rolls) || !rolls.length) {
-        return { status: 'error', message: 'Ошибка создания ответов' };
-      }
-
-      const lastRoll = rolls.slice(-1)[0];
-
-      const questionNumber = Math.floor(Math.random() * 180);
-
-      let result = null;
-
-      for (const player of players) {
-        const isCountable: 'true' | 'false' = (player.id === lastTurn.player_id) ? 'false' : 'true';
-
-        // eslint-disable-next-line no-await-in-loop
-        result = await Game.createAnswer({
-          turnId: lastTurn.id,
-          gameId,
-          playerId: player.id,
-          rollId: lastRoll.id,
-          questionId: questionNumber,
-          isCountable,
-          status: 'in_process',
-        });
-      }
-
-      if (result?.lastID) {
-        return {
-          status: 'success',
-          message: 'Ответы успешно созданы',
-          result: { result },
-        };
-      }
-      return { status: 'error', message: 'Ошибка при создании ответов' };
-    } catch (e) {
-      return { status: 'error', message: 'Ошибка при создании ответов' };
-    }
-  }
-
-  async updateAnswerStatus(status: 'error' | 'success' | 'in_process', answerId: number) {
-    try {
-      const result = await Game.updateAnswerStatus(status, answerId);
-      if (result) {
-        return { status: 'success', message: 'Ответ обновлен' };
-      }
-      return { status: 'error', message: 'Ошибка при обновлении ответа' };
-    } catch (e) {
-      return { status: 'error', message: 'Ошибка при обновлении ответа' };
-    }
-  }
-
-  async updateAnswersMode(status: 'true' | 'false', gameId: number) {
-    try {
-      const result = await Game.updateAnswersMode(status, gameId);
-      if (result) {
-        return { status: 'success', message: 'game AnswersMode обновлен' };
-      }
-      return { status: 'error', message: 'Ошибка при обновлении game AnswersMode' };
-    } catch (e) {
-      return { status: 'error', message: 'Ошибка при обновлении game AnswersMode' };
-    }
-  }
-
-  async updateExpiredAnswerStatus(status: 'success' | 'error', gameId: number) {
-    try {
-      const result = await Game.updateExpiredAnswerStatus(status, gameId);
-
-      if(result) {
-        return { status: 'success', message: 'Успех при обновлении ExpiredAnswerStatus' };
-      }
-      return { status: 'error', message: 'Ошибка при обновлении ExpiredAnswerStatus' };
-
-    } catch(e){
-      return { status: 'error', message: 'Ошибка при обновлении ExpiredAnswerStatus' };
-    }
-  }
-
 }
 
 export default new GameController();

@@ -59,9 +59,6 @@ class Game extends BaseModel {
   update = undefined;
 
   async read(options: GameReadOptions) {
-    if (options.hasOwnProperty('moderatorId')) {
-      return db.get('SELECT * FROM games WHERE moderator = ?', options.moderatorId);
-    }
     if (options.hasOwnProperty('id')) {
       return db.get('SELECT * FROM games WHERE id = ?', options.id);
     }
@@ -165,12 +162,6 @@ class Game extends BaseModel {
     return db.run(`UPDATE answers SET status = ? 
         WHERE game_id = ? 
         AND status = 'in_process'`, status, gameId);
-  }
-
-  async getAnswers(gameId: number) {
-    return db.all(`SELECT * FROM answers 
-        WHERE game_id = ? 
-        ORDER BY id ASC`, gameId);
   }
 
   delete = undefined;

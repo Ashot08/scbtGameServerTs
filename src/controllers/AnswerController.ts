@@ -1,11 +1,13 @@
-import Game from "../db/models/Game.ts";
-import Answer from "../db/models/Answer.ts";
+import Game from '../db/models/Game.ts';
+import Answer from '../db/models/Answer.ts';
+import {getQuestionNumber} from "../utils/getQuestionNumber.ts";
 
 class AnswerController {
   async createAnswers(gameId: number) {
     try {
       const turns = await Game.getTurns(gameId);
       const players = await Game.getPlayersByGameId({ id: gameId });
+      const answers = await Answer.getAnswers(gameId);
 
       if (!Array.isArray(turns) || !Array.isArray(players) || !players.length || !turns.length) {
         return { status: 'error', message: 'Ошибка создания ответов' };
@@ -20,7 +22,9 @@ class AnswerController {
 
       const lastRoll = rolls.slice(-1)[0];
 
-      const questionNumber = Math.floor(Math.random() * 180);
+      const questionNumber = getQuestionNumber(answers);
+
+
 
       let result = null;
 

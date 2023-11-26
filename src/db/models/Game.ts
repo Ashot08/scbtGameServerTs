@@ -134,36 +134,6 @@ class Game extends BaseModel {
     return db.all('SELECT * FROM rolls WHERE turn_id = ? ORDER BY id ASC', turnId);
   }
 
-  async createAnswer(options: AnswerOptions): Promise<RunResult> {
-    const {
-      turnId,
-      gameId,
-      playerId,
-      rollId,
-      questionId,
-      isCountable,
-      status,
-    } = options;
-    return db.run(
-      `INSERT INTO 
-            answers (turn_id, game_id, player_id, roll_id, question_id, is_countable, status) 
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-      `,
-      [turnId, gameId, playerId, rollId, questionId, isCountable, status],
-    );
-  }
-
-  async updateAnswerStatus(status: 'error' | 'success' | 'in_process', answerId: number) {
-    return db.run(`UPDATE answers SET status = ? 
-        WHERE id = ?`, status, answerId);
-  }
-
-  async updateExpiredAnswerStatus(status: 'error' | 'success' | 'in_process', gameId: number) {
-    return db.run(`UPDATE answers SET status = ? 
-        WHERE game_id = ? 
-        AND status = 'in_process'`, status, gameId);
-  }
-
   delete = undefined;
 }
 

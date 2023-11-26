@@ -3,7 +3,6 @@ import BaseModel from './BaseModel.ts';
 import db from '../index.ts';
 import RunResult = ISqlite.RunResult;
 
-
 export interface AnswerReadOptions {
   id?: number,
 }
@@ -18,7 +17,6 @@ export interface AnswerOptions {
   status: 'error' | 'success' | 'in_process',
 }
 class Answer extends BaseModel {
-
   async read(options: AnswerReadOptions) {
     if (options.hasOwnProperty('id')) {
       return db.get('SELECT * FROM answers WHERE id = ?', options.id);
@@ -65,6 +63,7 @@ class Answer extends BaseModel {
   }
 
   update = undefined;
+
   delete = undefined;
 }
 

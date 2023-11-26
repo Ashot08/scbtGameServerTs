@@ -5,7 +5,7 @@ import RunResult = ISqlite.RunResult;
 import Game, { JoinGameOptions } from '../db/models/Game.ts';
 import { getRandomNumber } from '../utils/getRandomNumber.ts';
 import { getNextTurn } from '../utils/getNextTurn.ts';
-import Answer from "../db/models/Answer.ts";
+import Answer from '../db/models/Answer.ts';
 
 class GameController {
   async createGame(req: any, res: any) {

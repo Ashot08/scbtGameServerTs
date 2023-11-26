@@ -1,8 +1,7 @@
 import GameController from '../../controllers/GameController.ts';
-import AnswerController from "../../controllers/AnswerController.ts";
+import AnswerController from '../../controllers/AnswerController.ts';
 
 export default (io: any, socket: any) => {
-
   async function startAnswers() {
     try {
       const result = await AnswerController.createAnswers(socket.roomId);
@@ -26,6 +25,7 @@ export default (io: any, socket: any) => {
 
       const gameState = await GameController.getState(socket.roomId);
       io.to(socket.roomId).emit('game:updateState', gameState);
+      io.to(socket.roomId).emit('game:stopAnswers', gameState);
 
       socket.emit('notification', { status: 'success', message: 'updateExpiredAnswerStatus' });
     } catch (e) {
@@ -40,15 +40,12 @@ export default (io: any, socket: any) => {
       if (!result) throw new Error('Update Answers error');
       const gameState = await GameController.getState(socket.roomId);
 
-      const answer = gameState.state?.answers.find((a) => {
-        return a.id === data.answerId
-      });
+      const answer = gameState.state?.answers.find((a) => a.id === data.answerId);
 
       if (answer.is_countable === 'false') {
         io.to(socket.roomId).emit('answer:startTimer', gameState);
       }
       io.to(socket.roomId).emit('game:updateState', gameState);
-
     } catch (e) {
       socket.emit('notification', { status: 'error', message: 'Create Answers error' });
     }

@@ -1,6 +1,6 @@
 import Game from '../db/models/Game.ts';
 import Answer from '../db/models/Answer.ts';
-import {getQuestionNumber} from "../utils/getQuestionNumber.ts";
+import { getQuestionNumber } from '../utils/getQuestionNumber.ts';
 
 class AnswerController {
   async createAnswers(gameId: number) {
@@ -23,8 +23,6 @@ class AnswerController {
       const lastRoll = rolls.slice(-1)[0];
 
       const questionNumber = getQuestionNumber(answers);
-
-
 
       let result = null;
 

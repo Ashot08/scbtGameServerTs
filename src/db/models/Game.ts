@@ -23,15 +23,6 @@ export interface JoinGameOptions {
   gameId: number,
 }
 
-export interface AnswerOptions {
-  turnId: number,
-  gameId: number,
-  playerId: number,
-  rollId: number,
-  questionId: number,
-  isCountable: 'true' | 'false',
-  status: 'error' | 'success' | 'in_process',
-}
 class Game extends BaseModel {
   async create(data: CreateGameData): Promise<RunResult> {
     const {

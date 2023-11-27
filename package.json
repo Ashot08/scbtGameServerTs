@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "npm run lint && nodemon",
     "lint": "eslint '**/*.ts'",
-    "build": "tsc -p ."
+    "build": "tsc"
   },
   "dependencies": {
     "@typescript-eslint/eslint-plugin": "^6.4.1",

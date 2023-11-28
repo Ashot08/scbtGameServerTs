@@ -85,6 +85,19 @@ class Game extends BaseModel {
     return [];
   }
 
+  async getGamesByPlayerId(playerId: number) {
+    if (playerId) {
+      return db.all(
+        `SELECT g.id, g.title, g.status 
+        FROM games_players as gp
+        JOIN games as g ON g.id = gp.game_id
+        WHERE gp.player_id = ? ORDER BY g.id ASC`,
+        playerId,
+      );
+    }
+    return [];
+  }
+
   async getPlayers(gameId: number) {
     return db.all('SELECT * FROM games_players WHERE game_id = ? ORDER BY id ASC', gameId);
   }

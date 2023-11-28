@@ -11,5 +11,5 @@ gameRouter.post('/create', [
   check('moderator', 'Не указан модератор').notEmpty(),
 ], AuthMiddleware, GameController.createGame);
 
-gameRouter.get('/games', AuthMiddleware, GameController.getGames);
+gameRouter.get('/games/:playerId', AuthMiddleware, GameController.getGamesByPlayerId);
 gameRouter.get('/game/:id', AuthMiddleware, GameController.getGame);

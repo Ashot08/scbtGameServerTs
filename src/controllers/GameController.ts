@@ -56,6 +56,20 @@ class GameController {
     }
   }
 
+  async getGamesByPlayerId (req: any, res: any) {
+    try {
+      const { playerId } = req.params;
+      const games = await Game.getGamesByPlayerId(playerId);
+
+      if (Array.isArray(games)) {
+        return res.json({ message: 'Success Get Games', games });
+      }
+      return res.status(200).json({ message: 'Get Games error' });
+    } catch (e) {
+      return res.status(400).json({ message: 'Get Games error' });
+    }
+  }
+
   async joinGame(data: JoinGameOptions) {
     const {
       playerId,

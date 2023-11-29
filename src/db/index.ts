@@ -51,6 +51,24 @@ await db.exec(`
 `);
 
 await db.exec(`
+  CREATE TABLE IF NOT EXISTS games_questionsCats (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      game_id INTEGER,
+      questionCat_id INTEGER,
+      FOREIGN KEY (game_id) REFERENCES games (id) ON UPDATE CASCADE ON DELETE CASCADE,
+      FOREIGN KEY (questionCat_id) REFERENCES questionCats (id) ON UPDATE CASCADE ON DELETE CASCADE
+  );
+`);
+
+await db.exec(`
+  CREATE TABLE IF NOT EXISTS questionCats (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT,
+      slug TEXT UNIQUE,
+  );
+`);
+
+await db.exec(`
   CREATE TABLE IF NOT EXISTS turns (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       game_id INTEGER,

@@ -45,14 +45,12 @@ export default (io: any, socket: any) => {
       if (answer.is_countable === 'false') {
         io.to(socket.roomId).emit('answer:startTimer', gameState);
 
-        setTimeout(async function () {
+        setTimeout(async () => {
           // io.to(socket.roomId).emit('answer:stopTimer', gameState);
           await AnswerController.updateExpiredAnswerStatus('error', socket.roomId);
           const gameState = await GameController.getState(socket.roomId);
           io.to(socket.roomId).emit('game:updateState', gameState);
-
         }, 3500);
-
       }
 
       io.to(socket.roomId).emit('game:updateState', gameState);

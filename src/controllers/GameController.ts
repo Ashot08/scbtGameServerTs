@@ -56,7 +56,7 @@ class GameController {
     }
   }
 
-  async getGamesByPlayerId (req: any, res: any) {
+  async getGamesByPlayerId(req: any, res: any) {
     try {
       const { playerId } = req.params;
       const games = await Game.getGamesByPlayerId(playerId);

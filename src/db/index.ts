@@ -64,7 +64,7 @@ await db.exec(`
   CREATE TABLE IF NOT EXISTS questionCats (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       title TEXT,
-      slug TEXT UNIQUE,
+      slug TEXT UNIQUE
   );
 `);
 

@@ -10,7 +10,6 @@ export interface QuestionCatOptions {
   slug: string,
 }
 class Question extends BaseModel {
-
   async getQuestionCats() {
     return db.all(`SELECT * FROM questionCats 
         ORDER BY id ASC`);
@@ -26,7 +25,7 @@ class Question extends BaseModel {
     );
   }
 
-  async createQuestionCat (options: QuestionCatOptions) {
+  async createQuestionCat(options: QuestionCatOptions) {
     const {
       title,
       slug,
@@ -40,12 +39,10 @@ class Question extends BaseModel {
     );
   }
 
-  async addQuestionCatsToGame (catsIds: number[], gameId: number) {
-
-
+  async addQuestionCatsToGame(catsIds: number[], gameId: number) {
     let sql = '';
 
-    for(const id of catsIds) {
+    for (const id of catsIds) {
       sql += `INSERT OR ROLLBACK 
             INTO games_questionsCats 
             (game_id, questionCat_id) 
@@ -55,13 +52,11 @@ class Question extends BaseModel {
     return db.run(
       `BEGIN TRANSACTION;
             ${sql}
-            COMMIT;
+       COMMIT;
       `,
       [],
     );
   }
-
-
 
   create = undefined;
 

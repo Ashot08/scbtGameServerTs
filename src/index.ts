@@ -10,6 +10,7 @@ import { authRouter } from './routes/authRouter.ts';
 import { gameRouter } from './routes/gameRouter.ts';
 import gameHandler from './ws/handlers/gameHandler.ts';
 import answerHandler from './ws/handlers/answerHandler.ts';
+import {questionRouter} from "./routes/questionRouter.ts";
 
 const app = express();
 app.use(cors());
@@ -26,6 +27,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use('/auth', authRouter);
 app.use('/game', gameRouter);
+app.use('/question', questionRouter);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -58,6 +60,6 @@ io.on('connection', async (socket: any) => {
   });
 
   socket.on('chat message', async () => {
-    await db.run('INSERT INTO messages (content) VALUES (?)');
+    console.log(db);
   });
 });

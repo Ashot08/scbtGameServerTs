@@ -40,21 +40,26 @@ class Question extends BaseModel {
     );
   }
 
-  // async addQuestionCatToGame () {
-  //
-  //   return db.run(
-  //     `BEGIN TRANSACTION;
-  //           INSERT OR ROLLBACK INTO Products VALUES (1, 'Hammer', 9.99);
-  //           INSERT OR ROLLBACK INTO Products VALUES (2, NULL, 1.49);
-  //           INSERT OR ROLLBACK INTO Products VALUES (3, 'Saw', 11.34);
-  //           INSERT OR ROLLBACK INTO Products VALUES (4, 'Wrench', 37.00);
-  //           INSERT OR ROLLBACK INTO Products VALUES (5, 'Chisel', 23.00);
-  //           INSERT OR ROLLBACK INTO Products VALUES (6, 'Bandage', 120.00);
-  //           COMMIT;
-  //     `,
-  //     [],
-  //   );
-  // }
+  async addQuestionCatsToGame (catsIds: number[], gameId: number) {
+
+
+    let sql = '';
+
+    for(const id of catsIds) {
+      sql += `INSERT OR ROLLBACK 
+            INTO games_questionsCats 
+            (game_id, questionCat_id) 
+            VALUES (${gameId}, ${id});`;
+    }
+
+    return db.run(
+      `BEGIN TRANSACTION;
+            ${sql}
+            COMMIT;
+      `,
+      [],
+    );
+  }
 
 
 

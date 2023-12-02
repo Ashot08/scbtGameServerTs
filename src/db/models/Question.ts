@@ -58,22 +58,26 @@ class Question extends BaseModel {
     );
   }
 
-  async deleteQuestionCats(catsIds: number[]) {
+  async deleteQuestionCats(catsIds: number[] | string[]) {
     let sql = '';
 
-    for (const id of catsIds) {
-      sql += `DELETE OR ROLLBACK 
-            FROM questionCats 
-            WHERE id = ${id}; 
-            `;
-    }
+    console.log(catsIds)
+    console.log(sql)
+    // for (const id of catsIds) {
+    //   sql += `DELETE OR ROLLBACK
+    //         FROM questionCats
+    //         WHERE id = '${id}';
+    //         `;
+    // }
 
-    return db.run(
+
+
+    return db.exec(
       `BEGIN TRANSACTION;
-            ${sql}
+            DELETE FROM questionCats WHERE id = '3'; 
+            DELETE FROM questionCats WHERE id = '4'; 
        COMMIT;
-      `,
-      [],
+      `
     );
   }
 

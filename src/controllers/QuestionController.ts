@@ -26,6 +26,28 @@ class QuestionController {
     }
   }
 
+  async deleteQuestionCats (req: any, res: any) {
+    try {
+      const {catsIds} = req.body;
+      if(!Array.isArray(catsIds) || !catsIds.length) {
+        return res.status(200).json({ status: 'error', message: 'Delete Cats error (empty cats)' });
+      }
+
+
+
+      const result = await Question.deleteQuestionCats(catsIds);
+
+      console.log(result);
+
+      if (1) {
+        return res.json({ status: 'success', message: 'Success Delete Cats', result });
+      }
+      return res.status(200).json({ status: 'error', message: 'Delete Cats error', result });
+    } catch (e) {
+      return res.status(400).json({ status: 'error', message: 'Delete Cats error',  });
+    }
+  }
+
   // @ts-expect-error: unused variable 'req'
   async getQuestionCats(req: any, res: any) {
     try {

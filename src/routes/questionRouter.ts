@@ -10,5 +10,9 @@ questionRouter.post('/create_cat', [
   check('slug', 'Slug не указано').notEmpty(),
 ], AuthMiddleware, QuestionController.createQuestionCat);
 
+questionRouter.post('/delete_cats', [
+  check('catsIds', 'Категории не может быть пустым').notEmpty(),
+], AuthMiddleware, QuestionController.deleteQuestionCats);
+
 // questionRouter.get('/games/:playerId', AuthMiddleware, GameController.getGamesByPlayerId);
 questionRouter.get('/cats', AuthMiddleware, QuestionController.getQuestionCats);

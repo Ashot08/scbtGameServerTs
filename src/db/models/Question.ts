@@ -58,6 +58,25 @@ class Question extends BaseModel {
     );
   }
 
+  async deleteQuestionCats(catsIds: number[]) {
+    let sql = '';
+
+    for (const id of catsIds) {
+      sql += `DELETE OR ROLLBACK 
+            FROM questionCats 
+            WHERE id = ${id}; 
+            `;
+    }
+
+    return db.run(
+      `BEGIN TRANSACTION;
+            ${sql}
+       COMMIT;
+      `,
+      [],
+    );
+  }
+
   create = undefined;
 
   read = undefined;

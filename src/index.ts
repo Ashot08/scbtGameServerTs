@@ -10,7 +10,7 @@ import { authRouter } from './routes/authRouter.ts';
 import { gameRouter } from './routes/gameRouter.ts';
 import gameHandler from './ws/handlers/gameHandler.ts';
 import answerHandler from './ws/handlers/answerHandler.ts';
-import {questionRouter} from "./routes/questionRouter.ts";
+import { questionRouter } from './routes/questionRouter.ts';
 
 const app = express();
 app.use(cors());

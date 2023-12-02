@@ -9,7 +9,7 @@ class QuestionController {
       const validationErrors = validationResult(req);
 
       if (!validationErrors.isEmpty()) {
-        return res.status(400).json({ message: 'Ошибка при валидации данных', validationErrors });
+        return res.status(400).json({ status: 'error', message: 'Ошибка при валидации данных', validationErrors });
       }
 
       const questionCat = {
@@ -19,10 +19,10 @@ class QuestionController {
       const result: RunResult = await Question.createQuestionCat(questionCat);
 
       if (result.lastID) {
-        return res.json({ message: 'Категория вопроса успешно создана', result });
+        return res.json({ status: 'success', message: 'Категория вопроса успешно создана', result });
       }
     } catch (e) {
-      return res.status(400).json({ message: 'QuestionCat Creation error', e });
+      return res.status(400).json({ status: 'error', message: 'Ошибка, вероятно категория с таким названием уже существует.', e });
     }
   }
 
@@ -39,8 +39,6 @@ class QuestionController {
       return res.status(400).json({ message: 'Get Cats error' });
     }
   }
-
-
 }
 
 export default new QuestionController();

@@ -10,16 +10,5 @@ export const getQuestionNumber = (answers: any) => {
     }
   }
 
-  // const result = answers.map((a: any) => a.question_id).sort((a: number, b: number) => a - b);
-  // const newResult: any = {};
-  // for(let i = 30; i < result.length; i++) {
-  //   if(newResult[result[i]]) {
-  //     newResult[result[i]] += 1;
-  //   } else {
-  //     newResult[result[i]] = 1;
-  //   }
-  // }
-  // console.log('counter', newResult);
-
   return number;
 };

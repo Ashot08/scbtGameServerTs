@@ -6,6 +6,7 @@ import Game, { JoinGameOptions } from '../db/models/Game.ts';
 import { getRandomNumber } from '../utils/getRandomNumber.ts';
 import { getNextTurn } from '../utils/getNextTurn.ts';
 import Answer from '../db/models/Answer.ts';
+import Question from '../db/models/Question.ts';
 
 class GameController {
   async createGame(req: any, res: any) {
@@ -26,6 +27,15 @@ class GameController {
       const result: RunResult = await Game.create(game);
 
       if (result.lastID) {
+        const questionsCats = req.body.questionsCats;
+
+        if (Array.isArray(questionsCats) && questionsCats.length) {
+          for (const cat of questionsCats) {
+            // eslint-disable-next-line no-await-in-loop
+            await Question.addQuestionCatToGame(cat, result.lastID);
+          }
+        }
+
         return res.json({ message: 'Игра успешно создана', result });
       }
     } catch (e) {

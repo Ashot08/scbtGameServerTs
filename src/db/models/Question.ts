@@ -17,12 +17,19 @@ class Question extends BaseModel {
 
   async getQuestionCatsByGameId(gameId: number) {
     return db.all(
-      `SELECT c.id, c.title, c.slug 
+      `SELECT c.id, c.title, c.slug
         FROM games_questionsCats as gc
         JOIN questionCats as c ON c.id = gc.questionCat_id
         WHERE gc.game_id = ? ORDER BY c.id ASC`,
       gameId,
     );
+    // return db.all(
+    //   `SELECT c.id, c.title, c.slug
+    //     FROM games_questionsCats as gc
+    //     JOIN questionCats as c ON c.id = gc.questionCat_id
+    //     ORDER BY c.id ASC`,
+    //   gameId,
+    // );
   }
 
   async createQuestionCat(options: QuestionCatOptions) {
@@ -39,45 +46,22 @@ class Question extends BaseModel {
     );
   }
 
-  async addQuestionCatsToGame(catsIds: number[], gameId: number) {
-    let sql = '';
-
-    for (const id of catsIds) {
-      sql += `INSERT OR ROLLBACK 
-            INTO games_questionsCats 
-            (game_id, questionCat_id) 
-            VALUES (${gameId}, ${id});`;
-    }
-
+  async addQuestionCatToGame(catId: number | string, gameId: number) {
     return db.run(
-      `BEGIN TRANSACTION;
-            ${sql}
-       COMMIT;
-      `,
-      [],
+      `INSERT INTO games_questionsCats 
+            (game_id, questionCat_id) 
+            VALUES (?, ?)`,
+      [gameId, catId],
     );
   }
 
-  async deleteQuestionCats(catsIds: number[] | string[]) {
-    let sql = '';
-
-    console.log(catsIds)
-    console.log(sql)
-    // for (const id of catsIds) {
-    //   sql += `DELETE OR ROLLBACK
-    //         FROM questionCats
-    //         WHERE id = '${id}';
-    //         `;
-    // }
-
-
-
-    return db.exec(
-      `BEGIN TRANSACTION;
-            DELETE FROM questionCats WHERE id = '3'; 
-            DELETE FROM questionCats WHERE id = '4'; 
-       COMMIT;
-      `
+  async deleteQuestionCat(catId: number | string) {
+    return db.run(
+      `DELETE
+            FROM questionCats
+            WHERE id = ?;
+            `,
+      [catId],
     );
   }
 

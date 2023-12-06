@@ -83,6 +83,9 @@
             input.value = '';
         }
     });
+    socket.on('message', (msg) => {
+        console.log(msg)
+    });
 
     socket.on('game:updateState', (msg) => {
         console.log(msg)

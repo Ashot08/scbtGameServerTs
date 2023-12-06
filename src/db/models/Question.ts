@@ -6,6 +6,7 @@ export interface QuestionCatReadOptions {
 }
 
 export interface QuestionCatOptions {
+  id?: number,
   title: string,
   slug: string,
 }

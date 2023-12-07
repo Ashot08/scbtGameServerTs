@@ -11,7 +11,7 @@ import { gameRouter } from './routes/gameRouter.ts';
 import gameHandler from './ws/handlers/gameHandler.ts';
 import answerHandler from './ws/handlers/answerHandler.ts';
 import { questionRouter } from './routes/questionRouter.ts';
-import answersString from './handleAnswers.ts';
+// import answersString from './handleAnswers.ts';
 
 const app = express();
 app.use(cors());
@@ -60,7 +60,7 @@ io.on('connection', async (socket: any) => {
     socket.leave(roomId as string);
   });
 
-  socket.emit('message', answersString);
+  // socket.emit('message', answersString);
 
   socket.on('chat message', async () => {
     console.log(db);

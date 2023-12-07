@@ -1,7 +1,7 @@
 import Game from '../db/models/Game.ts';
 import Answer from '../db/models/Answer.ts';
 import { getQuestionNumber } from '../utils/getQuestionNumber.ts';
-import Question from "../db/models/Question.ts";
+import Question from '../db/models/Question.ts';
 
 class AnswerController {
   async createAnswers(gameId: number) {

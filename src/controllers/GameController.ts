@@ -217,6 +217,18 @@ class GameController {
       return { status: 'error', message: 'Ошибка при создании хода' };
     }
   }
+
+  async finishGame(gameId: number) {
+    try {
+      const result = await Game.updateStatus('finished', gameId);
+      if (result.changes) {
+        return { status: 'success', message: 'game status обновлен' };
+      }
+      return { status: 'error', message: 'Ошибка при обновлении game status' };
+    } catch (e) {
+      return { status: 'error', message: 'Ошибка при обновлении game status' };
+    }
+  }
 }
 
 export default new GameController();

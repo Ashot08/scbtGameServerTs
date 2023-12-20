@@ -12,8 +12,7 @@ export const getQuestionNumber = (answers: any, gameQuestionCats: QuestionCatOpt
   } else {
     availableCat = true;
   }
-
-  if (Array.isArray(answers) && answers.length) {
+  if (Array.isArray(answers)) {
     while (
       (
         counter < 500000

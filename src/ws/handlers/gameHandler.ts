@@ -81,8 +81,22 @@ export default (io: any, socket: any) => {
     }
   }
 
+  async function stopGame() {
+    try {
+      const result = await GameController.finishGame(socket.roomId);
+      if (result.status === 'success') {
+        const gameState = await GameController.getState(socket.roomId);
+        io.to(socket.roomId).emit('game:updateState', gameState);
+        io.to(socket.roomId).emit('game:gameFinished');
+      }
+    } catch (e) {
+      socket.emit('notification', { status: 'error', message: 'Finish Game Error' });
+    }
+  }
+
   socket.on('game:join', joinGame);
   socket.on('game:getState', getState);
   socket.on('game:create_roll', roll);
   socket.on('game:create_turn', createTurn);
+  socket.on('game:stop_game', stopGame);
 };

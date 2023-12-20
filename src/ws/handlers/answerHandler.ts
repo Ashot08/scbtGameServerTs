@@ -27,7 +27,7 @@ export default (io: any, socket: any) => {
       io.to(socket.roomId).emit('game:updateState', gameState);
       io.to(socket.roomId).emit('game:stopAnswers', gameState);
 
-      socket.emit('notification', { status: 'success', message: 'updateExpiredAnswerStatus' });
+      // socket.emit('notification', { status: 'success', message: 'updateExpiredAnswerStatus' });
     } catch (e) {
       socket.emit('notification', { status: 'error', message: 'updateExpiredAnswerStatus error' });
     }

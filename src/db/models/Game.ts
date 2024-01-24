@@ -11,7 +11,8 @@ export interface CreateGameData {
   moderator: number,
   creationDate: string,
   moderatorMode: boolean,
-  answersMode: 'true' | 'false'
+  answersMode: 'true' | 'false',
+  shiftChangeMode: 'true' | 'false',
 }
 export interface GameReadOptions {
   id?: number,
@@ -33,6 +34,7 @@ class Game extends BaseModel {
       creationDate,
       moderatorMode,
       answersMode,
+      shiftChangeMode,
     } = data;
     return db.run(
       `INSERT INTO 
@@ -40,10 +42,13 @@ class Game extends BaseModel {
             title, 
             status, 
             players_count, 
-            moderator, creation_date, moderator_mode, answers_mode) 
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            moderator, creation_date, moderator_mode, answers_mode, shift_change_mode) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       `,
-      [title, status, playersCount, moderator, creationDate, moderatorMode, answersMode],
+      [title,
+        status,
+        playersCount,
+        moderator, creationDate, moderatorMode, answersMode, shiftChangeMode],
     );
   }
 
@@ -136,6 +141,36 @@ class Game extends BaseModel {
 
   async getRolls(turnId: number) {
     return db.all('SELECT * FROM rolls WHERE turn_id = ? ORDER BY id ASC', turnId);
+  }
+
+  async createPlayerState(gameId: number, playerId: number): Promise<RunResult> {
+    return db.run(
+      `INSERT INTO 
+            players_state (
+            game_id, 
+            player_id, 
+            workers_alive,
+            active_worker,
+            money,
+            defends,
+            active_defends_scheme,
+            not_active_defends_scheme,
+            workers_positions_scheme,
+            accident_difficultly,  
+            questions_to_active_def_count,  
+            questions_without_def_count 
+            ) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `,
+      [gameId, playerId, 6, 0, 10, 0,
+        '0,0,0,0,0,0', '0,0,0,0,0,0', '0,0,0,0,0,0',
+        0, 0, 0,
+      ],
+    );
+  }
+
+  async getPlayersStateByGameId(gameId: number) {
+    return db.all('SELECT * FROM players_state WHERE game_id = ? ORDER BY id ASC', gameId);
   }
 
   delete = undefined;

@@ -21,6 +21,7 @@ class GameController {
         ...req.body,
         status: 'created',
         answersMode: 'false',
+        shiftChangeMode: 'true',
         creationDate: new Date().toJSON(),
       };
 
@@ -111,6 +112,9 @@ class GameController {
       const result = await Game.joinGame(data);
 
       if (result.lastID) {
+        // Если ок, добавляем игрока в players_state
+        await Game.createPlayerState(data.gameId, data.playerId);
+
         return { status: 'success', message: 'Игрок успешно добавлен в игру' };
       }
     } catch (e) {
@@ -125,6 +129,7 @@ class GameController {
       const players = await Game.getPlayersByGameId({ id: gameId });
       const turns = await Game.getTurns(gameId);
       const answers = await Answer.getAnswers(gameId);
+      const playersState = await Game.getPlayersStateByGameId(gameId);
       let lastTurnRolls = [];
 
       if (Array.isArray(turns) && turns.length) {
@@ -147,6 +152,7 @@ class GameController {
           turns,
           answers,
           lastTurnRolls,
+          playersState,
         },
       };
     } catch (e) {

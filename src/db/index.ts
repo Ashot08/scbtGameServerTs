@@ -36,7 +36,8 @@ await db.exec(`
       start_date TEXT,
       end_date TEXT,
       moderator_mode TEXT,
-      answers_mode TEXT
+      answers_mode TEXT,
+      shift_change_mode TEXT
   );
 `);
 
@@ -98,6 +99,26 @@ await db.exec(`
       is_countable TEXT,
       status TEXT,
       FOREIGN KEY (game_id) REFERENCES games (id) ON UPDATE CASCADE ON DELETE CASCADE 
+  );
+`);
+
+await db.exec(`
+  CREATE TABLE IF NOT EXISTS players_state (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      player_id INTEGER,
+      game_id INTEGER,
+      workers_alive INTEGER,
+      active_worker INTEGER,
+      money INTEGER,
+      defends INTEGER,
+      active_defends_scheme TEXT,
+      not_active_defends_scheme TEXT,
+      workers_positions_scheme TEXT,
+      accident_difficultly INTEGER,  
+      questions_to_active_def_count INTEGER,  
+      questions_without_def_count INTEGER,  
+      FOREIGN KEY (game_id) REFERENCES games (id) ON UPDATE CASCADE ON DELETE CASCADE, 
+      FOREIGN KEY (player_id) REFERENCES players (id) ON UPDATE CASCADE ON DELETE CASCADE 
   );
 `);
 

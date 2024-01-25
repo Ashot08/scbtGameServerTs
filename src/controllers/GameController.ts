@@ -7,11 +7,21 @@ import { getRandomNumber } from '../utils/getRandomNumber.ts';
 import { getNextTurn } from '../utils/getNextTurn.ts';
 import Answer from '../db/models/Answer.ts';
 import Question from '../db/models/Question.ts';
-import {getNewNotActiveDefendsScheme, getNewWorkersPositionsScheme} from "../utils/game.ts";
+import {getNewNotActiveDefendsScheme, getNewWorkersPositionsScheme, getWorkersOnPositionsCount} from "../utils/game.ts";
 
 export type UpdateWorkerData = {
   userId: number,
   data: {workerIndex: number, addedDefendsCount: number, workerIsSet: boolean}
+}
+
+export type BuyDefendsData = {
+  userId: number,
+  defendsCount: number
+}
+
+export type ChangeReadyStatusData = {
+  userId: number,
+  readyStatus: boolean,
 }
 
 class GameController {
@@ -242,6 +252,11 @@ class GameController {
     }
   }
 
+  async getPlayersStateByGameId (gameId: number) {
+    const playersState = await Game.getPlayersStateByGameId(gameId);
+    return playersState;
+  }
+
   async updateWorkerData(gameId: number, data: UpdateWorkerData) {
     const userId = data.userId;
     const workerIndex = data.data.workerIndex;
@@ -260,15 +275,71 @@ class GameController {
     }
 
     if(addedDefendsCount) {
-
       if(addedDefendsCount <= playerState.defends) {
+        let newDefendsValue = playerState.defends - addedDefendsCount;
         notActiveDefendsScheme = getNewNotActiveDefendsScheme(playerState, workerIndex, addedDefendsCount);
         await Game.updateWorkerNotActiveDefends(userId, gameId, notActiveDefendsScheme);
+        await Game.updatePlayerDefends(userId, gameId, newDefendsValue);
       }
     }
 
     return { status: 'success', message: 'updateWorkerData' };
   }
+
+  async buyDefends (gameId: number, data: BuyDefendsData) {
+    const userId = data.userId;
+    let newDefendsValue = data.defendsCount;
+    let newMoneyValue = 0;
+
+    const playerState = await Game.getPlayerState(gameId, userId);
+
+    if(!playerState.id) return { status: 'error', message: 'getPlayerState Ошибка' };
+
+    if (!newDefendsValue) return { status: 'error', message: 'defendsCount <= 0 Ошибка' };
+
+    if(playerState.money < newDefendsValue) return { status: 'error', message: 'no money' };
+
+    newMoneyValue = playerState.money - newDefendsValue;
+    newDefendsValue += playerState.defends;
+
+    await Game.updatePlayerDefends(userId, gameId, newDefendsValue);
+    await Game.updatePlayerMoney(userId, gameId, newMoneyValue);
+
+    return { status: 'success', message: 'buyDefends' };
+  }
+
+  async updatePlayerReadyStatus (gameId: number, data: ChangeReadyStatusData) {
+    const userId = data.userId;
+    const readyStatus = data.readyStatus ? 'true' : 'false';
+    const result = await Game.updatePlayerReadyStatus(userId, gameId, readyStatus);
+
+    if(result.changes) {
+      return { status: 'success', message: 'updatePlayerReadyStatus' };
+    }
+    return { status: 'error', message: 'updatePlayerReadyStatus' };
+  }
+
+  async updateShiftChangeMode (gameId: number, shiftChangeMode: 'true' | 'false') {
+    if(shiftChangeMode !== 'true' && shiftChangeMode !== 'false') {
+      return { status: 'error', message: 'shiftChangeMode incorrect data' };
+    }
+    const result = await Game.updateShiftChangeMode(gameId, shiftChangeMode);
+    if(result.changes) {
+      return { status: 'success', message: 'updateShiftChangeMode' };
+    }
+    return { status: 'error', message: 'updateShiftChangeMode' };
+  }
+
+  async paySalary (gameId: number) {
+    const playersState = await Game.getPlayersStateByGameId(gameId);
+    for (const p of playersState) {
+      const workersOnPositionsCount = getWorkersOnPositionsCount(p);
+      const newMoneyValue = p.money + workersOnPositionsCount;
+      await Game.updatePlayerMoney(p.player_id, gameId, newMoneyValue);
+    }
+    return { status: 'success', message: 'paySalary' };
+  }
+
 }
 
 export default new GameController();

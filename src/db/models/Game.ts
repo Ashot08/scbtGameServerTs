@@ -158,15 +158,20 @@ class Game extends BaseModel {
             workers_positions_scheme,
             accident_difficultly,  
             questions_to_active_def_count,  
-            questions_without_def_count 
+            questions_without_def_count,
+            ready 
             ) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
       [gameId, playerId, 6, 0, 10, 0,
         '0,0,0,0,0,0', '0,0,0,0,0,0', '0,0,0,0,0,0',
-        0, 0, 0,
+        0, 0, 0, 'false'
       ],
     );
+  }
+
+  async updateShiftChangeMode (gameId: number, shiftChangeMode: string) {
+    return db.run('UPDATE games SET shift_change_mode = ? WHERE id = ?', shiftChangeMode, gameId);
   }
 
   async getPlayersStateByGameId(gameId: number) {
@@ -187,6 +192,18 @@ class Game extends BaseModel {
 
   async updateWorkersPositions(userId: number, gameId: number, workersPositionsScheme: string) {
     return db.run('UPDATE players_state SET workers_positions_scheme = ? WHERE player_id = ? AND game_id = ?', workersPositionsScheme, userId, gameId);
+  }
+
+  async updatePlayerDefends(userId: number, gameId: number, addedDefendsCount: number) {
+    return db.run('UPDATE players_state SET defends = ? WHERE player_id = ? AND game_id = ?', addedDefendsCount, userId, gameId);
+  }
+
+  async updatePlayerMoney(userId: number, gameId: number, newMoneyValue: number) {
+    return db.run('UPDATE players_state SET money = ? WHERE player_id = ? AND game_id = ?', newMoneyValue, userId, gameId);
+  }
+
+  async updatePlayerReadyStatus(userId: number, gameId: number, readyStatus: string) {
+    return db.run('UPDATE players_state SET ready = ? WHERE player_id = ? AND game_id = ?', readyStatus, userId, gameId);
   }
 
   delete = undefined;

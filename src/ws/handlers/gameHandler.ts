@@ -1,7 +1,12 @@
 import { JoinGameOptions } from '../../db/models/Game.ts';
-import GameController, {UpdateWorkerData} from '../../controllers/GameController.ts';
+import GameController, {
+  BuyDefendsData,
+  ChangeReadyStatusData,
+  UpdateWorkerData
+} from '../../controllers/GameController.ts';
 import { isNextShift } from '../../utils/isNextShift.ts';
 import { getActivePlayer } from '../../utils/getActivePlayer.ts';
+import {isAllPlayersReady} from "../../utils/game.ts";
 
 
 export default (io: any, socket: any) => {
@@ -67,6 +72,10 @@ export default (io: any, socket: any) => {
           const activePlayer = getActivePlayer(gameState.state);
 
           if (isNext.status) {
+            await GameController.updateShiftChangeMode(socket.roomId, 'true');
+            await GameController.paySalary(socket.roomId);
+            // const gameState = await GameController.getState(socket.roomId);
+            // io.to(socket.roomId).emit('game:updateState', gameState);
             io.to(socket.roomId).emit('game:nextShift', isNext, activePlayer);
           } else {
             io.to(socket.roomId).emit('game:nextPlayer', activePlayer);
@@ -101,10 +110,49 @@ export default (io: any, socket: any) => {
       if(result.status === 'success') {
         const gameState = await GameController.getState(socket.roomId);
         socket.emit('game:updateState', gameState);
-        socket.emit('notification', { status: 'error', message: 'Данные обновлены' });
+        socket.emit('notification', { status: 'success', message: 'Данные обновлены' });
       }
     } catch (e) {
       socket.emit('notification', { status: 'error', message: 'update_worker_data Error' });
+    }
+  }
+
+  async function buyDefends(data: BuyDefendsData) {
+    try {
+      const result = await GameController.buyDefends(socket.roomId, data);
+      if(result.status === 'success') {
+        const gameState = await GameController.getState(socket.roomId);
+        socket.emit('game:updateState', gameState);
+        socket.emit('notification', { status: 'success', message: 'Данные обновлены' });
+      }
+    } catch (e) {
+      socket.emit('notification', { status: 'error', message: 'buy_defends Error' });
+    }
+  }
+
+  async function changeReadyStatus(data: ChangeReadyStatusData) {
+    try {
+      const result = await GameController.updatePlayerReadyStatus(socket.roomId, data);
+      if(result.status === 'success') {
+
+        const playersState = await GameController.getPlayersStateByGameId(socket.roomId);
+
+        const allPlayersReady = isAllPlayersReady(playersState);
+
+        if(allPlayersReady) {
+          for(const p of playersState) {
+            await GameController.updatePlayerReadyStatus(socket.roomId,{userId: p.player_id, readyStatus: false});
+          }
+          await GameController.updateShiftChangeMode(socket.roomId, 'false');
+          io.to(socket.roomId).emit('game:allReadyStartShift');
+        }
+
+        const gameState = await GameController.getState(socket.roomId);
+        io.to(socket.roomId).emit('game:updateState', gameState);
+        // socket.emit('notification', { status: 'success', message: 'Готов!' });
+      }
+    } catch (e) {
+      socket.emit('notification', { status: 'error', message: 'changeReadyStatus Error' });
     }
   }
 
@@ -114,4 +162,6 @@ export default (io: any, socket: any) => {
   socket.on('game:create_turn', createTurn);
   socket.on('game:stop_game', stopGame);
   socket.on('game:update_worker_data', updateWorkerData);
+  socket.on('game:buy_defends', buyDefends);
+  socket.on('game:change_ready_status', changeReadyStatus);
 };

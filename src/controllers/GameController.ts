@@ -7,6 +7,12 @@ import { getRandomNumber } from '../utils/getRandomNumber.ts';
 import { getNextTurn } from '../utils/getNextTurn.ts';
 import Answer from '../db/models/Answer.ts';
 import Question from '../db/models/Question.ts';
+import {getNewNotActiveDefendsScheme, getNewWorkersPositionsScheme} from "../utils/game.ts";
+
+export type UpdateWorkerData = {
+  userId: number,
+  data: {workerIndex: number, addedDefendsCount: number, workerIsSet: boolean}
+}
 
 class GameController {
   async createGame(req: any, res: any) {
@@ -234,6 +240,34 @@ class GameController {
     } catch (e) {
       return { status: 'error', message: 'Ошибка при обновлении game status' };
     }
+  }
+
+  async updateWorkerData(gameId: number, data: UpdateWorkerData) {
+    const userId = data.userId;
+    const workerIndex = data.data.workerIndex;
+    const workerIsSet = data.data.workerIsSet;
+    const addedDefendsCount = data.data.addedDefendsCount;
+    let workersPositionsScheme = '';
+    let notActiveDefendsScheme = '';
+
+    const playerState = await Game.getPlayerState(gameId, userId);
+
+    if(!playerState.id) return { status: 'error', message: 'getPlayerState Ошибка' };
+
+    if(workerIsSet) {
+      workersPositionsScheme = getNewWorkersPositionsScheme(playerState, workerIndex);
+      await Game.updateWorkersPositions(userId, gameId, workersPositionsScheme);
+    }
+
+    if(addedDefendsCount) {
+
+      if(addedDefendsCount <= playerState.defends) {
+        notActiveDefendsScheme = getNewNotActiveDefendsScheme(playerState, workerIndex, addedDefendsCount);
+        await Game.updateWorkerNotActiveDefends(userId, gameId, notActiveDefendsScheme);
+      }
+    }
+
+    return { status: 'success', message: 'updateWorkerData' };
   }
 }
 

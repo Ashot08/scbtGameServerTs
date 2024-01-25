@@ -1,7 +1,8 @@
 import { JoinGameOptions } from '../../db/models/Game.ts';
-import GameController from '../../controllers/GameController.ts';
+import GameController, {UpdateWorkerData} from '../../controllers/GameController.ts';
 import { isNextShift } from '../../utils/isNextShift.ts';
 import { getActivePlayer } from '../../utils/getActivePlayer.ts';
+
 
 export default (io: any, socket: any) => {
   async function joinGame(data: JoinGameOptions) {
@@ -94,9 +95,23 @@ export default (io: any, socket: any) => {
     }
   }
 
+  async function updateWorkerData(data: UpdateWorkerData) {
+    try {
+      const result = await GameController.updateWorkerData(socket.roomId, data);
+      if(result.status === 'success') {
+        const gameState = await GameController.getState(socket.roomId);
+        socket.emit('game:updateState', gameState);
+        socket.emit('notification', { status: 'error', message: 'Данные обновлены' });
+      }
+    } catch (e) {
+      socket.emit('notification', { status: 'error', message: 'update_worker_data Error' });
+    }
+  }
+
   socket.on('game:join', joinGame);
   socket.on('game:getState', getState);
   socket.on('game:create_roll', roll);
   socket.on('game:create_turn', createTurn);
   socket.on('game:stop_game', stopGame);
+  socket.on('game:update_worker_data', updateWorkerData);
 };

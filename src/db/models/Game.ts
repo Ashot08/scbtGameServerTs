@@ -173,6 +173,22 @@ class Game extends BaseModel {
     return db.all('SELECT * FROM players_state WHERE game_id = ? ORDER BY id ASC', gameId);
   }
 
+  async getPlayerState(gameId: number, userId: number) {
+    return db.get('SELECT * FROM players_state WHERE game_id = ? AND player_id = ? ORDER BY id ASC', gameId, userId);
+  }
+
+  async updateWorkerNotActiveDefends(userId: number, gameId: number, defendsScheme: string) {
+    return db.run('UPDATE players_state SET not_active_defends_scheme = ? WHERE player_id = ? AND game_id = ?', defendsScheme, userId, gameId);
+  }
+
+  async updateWorkerActiveDefends(userId: number, gameId: number, defendsScheme: string) {
+    return db.run('UPDATE players_state SET active_defends_scheme = ? WHERE player_id = ? AND game_id = ?', defendsScheme, userId, gameId);
+  }
+
+  async updateWorkersPositions(userId: number, gameId: number, workersPositionsScheme: string) {
+    return db.run('UPDATE players_state SET workers_positions_scheme = ? WHERE player_id = ? AND game_id = ?', workersPositionsScheme, userId, gameId);
+  }
+
   delete = undefined;
 }
 

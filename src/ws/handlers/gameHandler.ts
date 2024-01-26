@@ -2,12 +2,11 @@ import { JoinGameOptions } from '../../db/models/Game.ts';
 import GameController, {
   BuyDefendsData,
   ChangeReadyStatusData,
-  UpdateWorkerData
+  UpdateWorkerData,
 } from '../../controllers/GameController.ts';
 import { isNextShift } from '../../utils/isNextShift.ts';
 import { getActivePlayer } from '../../utils/getActivePlayer.ts';
-import {isAllPlayersReady} from "../../utils/game.ts";
-
+import { getAccidentDifficultlyByPrizeNumber, isAllPlayersReady } from '../../utils/game.ts';
 
 export default (io: any, socket: any) => {
   async function joinGame(data: JoinGameOptions) {
@@ -48,6 +47,86 @@ export default (io: any, socket: any) => {
 
       if (result.status === 'success') {
         io.to(socket.roomId).emit('game:roll', result);
+
+        const accidentDifficultly = getAccidentDifficultlyByPrizeNumber(result.result?.prizeNumber);
+        const userId = result.result?.lastTurn.player_id;
+        const playerState = await GameController.getPlayerState(socket.roomId, userId);
+
+        switch (accidentDifficultly) {
+          case '0':
+            // Бонус
+            // updateAccidentDiff
+            // updateQuestionsToActivateDef
+            // updateQuestionsWithoutDef
+            // updateDefendsCount
+            // updateActiveWorker
+            await GameController.onRollBonus(socket.roomId, playerState);
+            break;
+
+          case '1':
+            // Микро
+            // updateAccidentDiff
+
+            // проверяем активные >= AccidentDiff
+            // если больше то
+              // updateQuestionsToActivateDef = 0 [1]
+              // updateQuestionsWithoutDef = 0
+              // updateActiveWorker
+              // updateNextWorker
+            // иначе
+              // если есть неактивные
+                // updateQuestionsToActivateDef = число неактивных защит на этой клетке
+                // отвечаем пока не наберем 1 защиту или defends < 1
+                // отвечаем пока не наберем 1 защиту defends-- updateDefends--
+                  // если набрал выходим в [1]
+              // updateQuestionsWithoutDef = 1
+                // отвечаем, если ошибка
+                  // Штраф 1 монета, если есть,
+                // Если верно
+                  // Ничего
+              // updateQuestionsToActivateDef = 0 [1]
+              // updateQuestionsWithoutDef = 0
+              // updateActiveWorker
+              // updateNextWorker
+              // Выход
+
+
+            // updateQuestionsWithoutDef
+
+            // После ответов updateActiveWorker
+
+            break;
+
+          case '2':
+            // Микро
+
+            break;
+
+          case '4':
+            // Травма
+
+            break;
+
+          case '5':
+            // Травма
+
+            break;
+
+          case '3 + 1':
+            // Групповой
+
+            break;
+
+          case '6 + 1':
+            // Групповой
+
+            break;
+
+          default:
+
+            break;
+        }
+
         const gameState = await GameController.getState(socket.roomId);
         io.to(socket.roomId).emit('game:updateState', gameState);
       } else {
@@ -73,7 +152,7 @@ export default (io: any, socket: any) => {
 
           if (isNext.status) {
             await GameController.updateShiftChangeMode(socket.roomId, 'true');
-            await GameController.paySalary(socket.roomId);
+            await GameController.paySalaryAndUpdateNoMoreRolls(socket.roomId);
             // const gameState = await GameController.getState(socket.roomId);
             // io.to(socket.roomId).emit('game:updateState', gameState);
             io.to(socket.roomId).emit('game:nextShift', isNext, activePlayer);
@@ -107,7 +186,7 @@ export default (io: any, socket: any) => {
   async function updateWorkerData(data: UpdateWorkerData) {
     try {
       const result = await GameController.updateWorkerData(socket.roomId, data);
-      if(result.status === 'success') {
+      if (result.status === 'success') {
         const gameState = await GameController.getState(socket.roomId);
         socket.emit('game:updateState', gameState);
         socket.emit('notification', { status: 'success', message: 'Данные обновлены' });
@@ -120,7 +199,7 @@ export default (io: any, socket: any) => {
   async function buyDefends(data: BuyDefendsData) {
     try {
       const result = await GameController.buyDefends(socket.roomId, data);
-      if(result.status === 'success') {
+      if (result.status === 'success') {
         const gameState = await GameController.getState(socket.roomId);
         socket.emit('game:updateState', gameState);
         socket.emit('notification', { status: 'success', message: 'Данные обновлены' });
@@ -133,15 +212,17 @@ export default (io: any, socket: any) => {
   async function changeReadyStatus(data: ChangeReadyStatusData) {
     try {
       const result = await GameController.updatePlayerReadyStatus(socket.roomId, data);
-      if(result.status === 'success') {
-
+      if (result.status === 'success') {
         const playersState = await GameController.getPlayersStateByGameId(socket.roomId);
 
         const allPlayersReady = isAllPlayersReady(playersState);
 
-        if(allPlayersReady) {
-          for(const p of playersState) {
-            await GameController.updatePlayerReadyStatus(socket.roomId,{userId: p.player_id, readyStatus: false});
+        if (allPlayersReady) {
+          for (const p of playersState) {
+            /* eslint-disable */
+            await GameController.updatePlayerReadyStatus(socket.roomId, { userId: p.player_id, readyStatus: false });
+            await GameController.setActualActiveWorker(socket.roomId, p);
+            await GameController.setActualNextWorker(socket.roomId, p);
           }
           await GameController.updateShiftChangeMode(socket.roomId, 'false');
           io.to(socket.roomId).emit('game:allReadyStartShift');

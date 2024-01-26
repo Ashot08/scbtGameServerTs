@@ -159,18 +159,22 @@ class Game extends BaseModel {
             accident_difficultly,  
             questions_to_active_def_count,  
             questions_without_def_count,
-            ready 
+            ready,
+            next_worker_mode,
+            next_worker_index,
+            questions_to_next_worker_count,
+            no_more_rolls 
             ) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
       [gameId, playerId, 6, 0, 10, 0,
         '0,0,0,0,0,0', '0,0,0,0,0,0', '0,0,0,0,0,0',
-        0, 0, 0, 'false'
+        0, 0, 0, 'false', 'false', 0, 0, 'false',
       ],
     );
   }
 
-  async updateShiftChangeMode (gameId: number, shiftChangeMode: string) {
+  async updateShiftChangeMode(gameId: number, shiftChangeMode: string) {
     return db.run('UPDATE games SET shift_change_mode = ? WHERE id = ?', shiftChangeMode, gameId);
   }
 
@@ -179,31 +183,119 @@ class Game extends BaseModel {
   }
 
   async getPlayerState(gameId: number, userId: number) {
-    return db.get('SELECT * FROM players_state WHERE game_id = ? AND player_id = ? ORDER BY id ASC', gameId, userId);
+    return db.get(
+      'SELECT * FROM players_state WHERE game_id = ? AND player_id = ? ORDER BY id ASC',
+      gameId,
+      userId,
+    );
   }
 
   async updateWorkerNotActiveDefends(userId: number, gameId: number, defendsScheme: string) {
-    return db.run('UPDATE players_state SET not_active_defends_scheme = ? WHERE player_id = ? AND game_id = ?', defendsScheme, userId, gameId);
+    return db.run(
+      'UPDATE players_state SET not_active_defends_scheme = ? WHERE player_id = ? AND game_id = ?',
+      defendsScheme,
+      userId,
+      gameId,
+    );
   }
 
   async updateWorkerActiveDefends(userId: number, gameId: number, defendsScheme: string) {
-    return db.run('UPDATE players_state SET active_defends_scheme = ? WHERE player_id = ? AND game_id = ?', defendsScheme, userId, gameId);
+    return db.run(
+      'UPDATE players_state SET active_defends_scheme = ? WHERE player_id = ? AND game_id = ?',
+      defendsScheme,
+      userId,
+      gameId,
+    );
   }
 
   async updateWorkersPositions(userId: number, gameId: number, workersPositionsScheme: string) {
-    return db.run('UPDATE players_state SET workers_positions_scheme = ? WHERE player_id = ? AND game_id = ?', workersPositionsScheme, userId, gameId);
+    return db.run(
+      'UPDATE players_state SET workers_positions_scheme = ? WHERE player_id = ? AND game_id = ?',
+      workersPositionsScheme,
+      userId,
+      gameId,
+    );
   }
 
   async updatePlayerDefends(userId: number, gameId: number, addedDefendsCount: number) {
-    return db.run('UPDATE players_state SET defends = ? WHERE player_id = ? AND game_id = ?', addedDefendsCount, userId, gameId);
+    return db.run(
+      'UPDATE players_state SET defends = ? WHERE player_id = ? AND game_id = ?',
+      addedDefendsCount,
+      userId,
+      gameId,
+    );
   }
 
   async updatePlayerMoney(userId: number, gameId: number, newMoneyValue: number) {
-    return db.run('UPDATE players_state SET money = ? WHERE player_id = ? AND game_id = ?', newMoneyValue, userId, gameId);
+    return db.run(
+      'UPDATE players_state SET money = ? WHERE player_id = ? AND game_id = ?',
+      newMoneyValue,
+      userId,
+      gameId,
+    );
   }
 
   async updatePlayerReadyStatus(userId: number, gameId: number, readyStatus: string) {
-    return db.run('UPDATE players_state SET ready = ? WHERE player_id = ? AND game_id = ?', readyStatus, userId, gameId);
+    return db.run(
+      'UPDATE players_state SET ready = ? WHERE player_id = ? AND game_id = ?',
+      readyStatus,
+      userId,
+      gameId,
+    );
+  }
+
+  async updatePlayerActiveWorker(userId: number, gameId: number, activeWorker: number) {
+    return db.run(
+      'UPDATE players_state SET active_worker = ? WHERE player_id = ? AND game_id = ?',
+      activeWorker,
+      userId,
+      gameId,
+    );
+  }
+
+  async updatePlayerNextWorkerIndex(userId: number, gameId: number, nexWorkerIndex: number) {
+    return db.run(
+      'UPDATE players_state SET next_worker_index = ? WHERE player_id = ? AND game_id = ?',
+      nexWorkerIndex,
+      userId,
+      gameId,
+    );
+  }
+
+  async updateAccidentDiff(userId: number, gameId: number, accidentDifficultly: number) {
+    return db.run(
+      'UPDATE players_state SET accident_difficultly = ? WHERE player_id = ? AND game_id = ?',
+      accidentDifficultly,
+      userId,
+      gameId,
+    );
+  }
+
+  async updateQuestionsToActivateDef(userId: number, gameId: number, questionsToActivateDefCount: number) {
+    return db.run(
+      'UPDATE players_state SET questions_to_active_def_count = ? WHERE player_id = ? AND game_id = ?',
+      questionsToActivateDefCount,
+      userId,
+      gameId,
+    );
+  }
+
+  async updateQuestionsWithoutDef(userId: number, gameId: number, questionsWithoutDefCount: number) {
+    return db.run(
+      'UPDATE players_state SET questions_without_def_count = ? WHERE player_id = ? AND game_id = ?',
+      questionsWithoutDefCount,
+      userId,
+      gameId,
+    );
+  }
+
+  async updateNoMoreRolls(userId: number, gameId: number, noMoreRolls: string) {
+    return db.run(
+      'UPDATE players_state SET no_more_rolls = ? WHERE player_id = ? AND game_id = ?',
+      noMoreRolls,
+      userId,
+      gameId,
+    );
   }
 
   delete = undefined;

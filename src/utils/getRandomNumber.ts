@@ -17,7 +17,7 @@ export const getRandomNumber = () => {
     prizeNumber = 1;
   } else if (randomNumber <= 31) {
     prizeNumber = 2;
-  } else if (randomNumber <= 46) {
+  } else if (randomNumber <= 460) {
     prizeNumber = 3;
   } else if (randomNumber <= 53) {
     prizeNumber = 4;

@@ -109,6 +109,8 @@ await db.exec(`
       game_id INTEGER,
       workers_alive INTEGER,
       active_worker INTEGER,
+      next_worker_index INTEGER,
+      next_worker_mode TEXT,
       money INTEGER,
       defends INTEGER,
       active_defends_scheme TEXT,
@@ -118,6 +120,8 @@ await db.exec(`
       ready TEXT,  
       questions_to_active_def_count INTEGER,  
       questions_without_def_count INTEGER,  
+      questions_to_next_worker_count INTEGER,  
+      no_more_rolls TEXT,  
       FOREIGN KEY (game_id) REFERENCES games (id) ON UPDATE CASCADE ON DELETE CASCADE, 
       FOREIGN KEY (player_id) REFERENCES players (id) ON UPDATE CASCADE ON DELETE CASCADE 
   );

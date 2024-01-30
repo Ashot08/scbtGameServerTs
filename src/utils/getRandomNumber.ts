@@ -11,13 +11,13 @@ export const getRandomNumber = () => {
   // ]
   const randomNumber = Math.ceil(Math.random() * 100);
   let prizeNumber = 0;
-  if (randomNumber <= 5) {
+  if (randomNumber <= 500) {
     prizeNumber = 0;
   } else if (randomNumber <= 20) {
     prizeNumber = 1;
   } else if (randomNumber <= 31) {
     prizeNumber = 2;
-  } else if (randomNumber <= 460) {
+  } else if (randomNumber <= 46) {
     prizeNumber = 3;
   } else if (randomNumber <= 53) {
     prizeNumber = 4;

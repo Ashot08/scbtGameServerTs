@@ -8,9 +8,13 @@ export const getWorkersOnPositionsCount = (playerState: any) => {
   }
   return count;
 };
-export const getNewWorkersPositionsScheme = (playerState: any, workerIndex: number) => {
+export const getNewWorkersPositionsScheme = (playerState: any, workerIndex: number, remove = false) => {
   const workersPositionsArray = playerState.workers_positions_scheme.split(',');
-  workersPositionsArray[workerIndex] = 1;
+  if (remove) {
+    workersPositionsArray[workerIndex] = 0;
+  } else {
+    workersPositionsArray[workerIndex] = 1;
+  }
   return workersPositionsArray.join(',');
 };
 
@@ -20,6 +24,20 @@ export const getNewNotActiveDefendsScheme = (
   addedDefendsCount: number,
 ) => {
   const addedDefendsArray = playerState.not_active_defends_scheme.split(',');
+  addedDefendsArray[workerIndex] = +addedDefendsArray[workerIndex] + addedDefendsCount;
+
+  if (addedDefendsArray[workerIndex] > 6) {
+    addedDefendsArray[workerIndex] = 6;
+  }
+  return addedDefendsArray.join(',');
+};
+
+export const getNewActiveDefendsScheme = (
+  playerState: any,
+  workerIndex: number,
+  addedDefendsCount: number,
+) => {
+  const addedDefendsArray = playerState.active_defends_scheme.split(',');
   addedDefendsArray[workerIndex] = +addedDefendsArray[workerIndex] + addedDefendsCount;
 
   if (addedDefendsArray[workerIndex] > 6) {
@@ -81,4 +99,20 @@ export const getAccidentDifficultlyByPrizeNumber = (prizeNumber: number | undefi
   }
   const accidentDifficultly = ['6 + 1', '0', '4', '1', '5', '2', '3 + 1', '1'];
   return accidentDifficultly[prizeNumber];
+};
+
+export const getActiveDefendsCount = (
+  playerState: any,
+  workerIndex: number,
+) => {
+  const activeDefendsArray = playerState.active_defends_scheme.split(',');
+  return activeDefendsArray[workerIndex];
+};
+
+export const getNotActiveDefendsCount = (
+  playerState: any,
+  workerIndex: number,
+) => {
+  const notActiveDefendsArray = playerState.not_active_defends_scheme.split(',');
+  return +notActiveDefendsArray[workerIndex];
 };

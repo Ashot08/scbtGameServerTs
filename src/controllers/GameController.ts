@@ -42,6 +42,7 @@ class GameController {
         status: 'created',
         answersMode: 'false',
         shiftChangeMode: 'true',
+        showRollResultMode: 'false',
         creationDate: new Date().toJSON(),
       };
 
@@ -343,6 +344,18 @@ class GameController {
     return { status: 'error', message: 'updateShiftChangeMode' };
   }
 
+  async updateShowRollResultMode(gameId: number, showRollResultMode: 'true' | 'false') {
+    if (showRollResultMode !== 'true' && showRollResultMode !== 'false') {
+      return { status: 'error', message: 'shiftChangeMode incorrect data' };
+    }
+    const result = await Game.updateShowRollResultMode(gameId, showRollResultMode);
+    if (result.changes) {
+      return { status: 'success', message: 'updateShowRollResultMode' };
+    }
+    return { status: 'error', message: 'updateShowRollResultMode' };
+  }
+
+
   async paySalaryAndUpdateNoMoreRolls(gameId: number) {
     const playersState = await Game.getPlayersStateByGameId(gameId);
     for (const p of playersState) {
@@ -380,26 +393,7 @@ class GameController {
     await Game.updateQuestionsWithoutDef(playerState.player_id, gameId, 0);
     await Game.updatePlayerDefends(playerState.player_id, gameId, playerState.defends + 1);
 
-    let activeWorkerIndex = playerState.active_worker;
-    let nextWorker = getNextWorkerIndex(playerState, activeWorkerIndex);
-    if(!nextWorker || (nextWorker < activeWorkerIndex)) {
-      await Game.updateNoMoreRolls(playerState.player_id, gameId, 'true');
-    } else {
-      await Game.updatePlayerActiveWorker(playerState.player_id, gameId, nextWorker);
-      nextWorker = getNextWorkerIndex(playerState, nextWorker);
-      await Game.updatePlayerNextWorkerIndex(playerState.player_id, gameId, nextWorker);
-    }
-
-    return {status: 'success', message: 'onRollBonus'};
-  }
-
-  async onRollMicro(gameId: number, playerState: any) {
-    await Game.updateAccidentDiff(playerState.player_id, gameId, 1);
-
-    // await Game.updateQuestionsToActivateDef(playerState.player_id, gameId, 0);
-    // await Game.updateQuestionsWithoutDef(playerState.player_id, gameId, 0);
-    // await Game.updatePlayerDefends(playerState.player_id, gameId, playerState.defends + 1);
-    //
+    // Переход к следующему рабочему
     // let activeWorkerIndex = playerState.active_worker;
     // let nextWorker = getNextWorkerIndex(playerState, activeWorkerIndex);
     // if(!nextWorker || (nextWorker < activeWorkerIndex)) {
@@ -410,8 +404,60 @@ class GameController {
     //   await Game.updatePlayerNextWorkerIndex(playerState.player_id, gameId, nextWorker);
     // }
 
-    return {status: 'success', message: 'onRollMicro'};
+    return {status: 'success', message: 'onRollBonus'};
   }
+
+  async onAccident(gameId: number, playerState: any) {
+    if(playerState.questions_to_active_def_count > 0) {
+      await Game.updateQuestionsToActivateDef(
+        playerState.player_id,
+        gameId,
+        playerState.questions_to_active_def_count - 1
+      )
+    } else if (playerState.questions_without_def_count > 0) {
+      await Game.updateQuestionsWithoutDef(
+        playerState.player_id,
+        gameId,
+        playerState.questions_without_def_count - 1
+      );
+    } else if (playerState.next_worker_mode === 'true') {
+
+    }
+    return {status: 'success', message: 'onAccident'};
+  }
+
+  async updateNotActiveDefends(gameId: number, playerState: any, newNotActiveDefsCount: number){
+    const notActiveDefendsScheme = getNewNotActiveDefendsScheme(
+      playerState,
+      playerState.active_worker,
+      newNotActiveDefsCount,
+    );
+    console.log(notActiveDefendsScheme, newNotActiveDefsCount);
+    await Game.updateWorkerNotActiveDefends(playerState.player_id, gameId, notActiveDefendsScheme);
+  }
+
+  async updatePlayerNextWorkerIndex(gameId: number, playerState: any){
+    const nextWorkerIndex = getNextWorkerIndex(
+      playerState,
+      playerState.active_worker,
+    );
+    await Game.updatePlayerNextWorkerIndex(playerState.player_id, gameId, nextWorkerIndex);
+  }
+  async updatePlayerNextWorkerMode(gameId: number, playerId: number, nextWorkerMode: string){
+    await Game.updatePlayerNextWorkerMode(playerId, gameId, nextWorkerMode);
+  }
+  async updateNextWorkerQuestionsCount(gameId: number, playerId: number, newQuestionsCount: number){
+    await Game.updateNextWorkerQuestionsCount(playerId, gameId, newQuestionsCount);
+  }
+
+  async updateQuestionsToActivateDef(userId: number, gameId: number, questionsToActivateDefCount: number) {
+    await Game.updateQuestionsToActivateDef(userId, gameId, questionsToActivateDefCount);
+  }
+
+  async updateQuestionsWithoutDef(userId: number, gameId: number, questionsWithoutDefCount: number) {
+    await Game.updateQuestionsWithoutDef(userId, gameId, questionsWithoutDefCount);
+  }
+
 }
 
 export default new GameController();

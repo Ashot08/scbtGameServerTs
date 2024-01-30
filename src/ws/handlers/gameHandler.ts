@@ -1,4 +1,4 @@
-import { JoinGameOptions } from '../../db/models/Game.ts';
+import Game, { JoinGameOptions } from '../../db/models/Game.ts';
 import GameController, {
   BuyDefendsData,
   ChangeReadyStatusData,
@@ -6,7 +6,12 @@ import GameController, {
 } from '../../controllers/GameController.ts';
 import { isNextShift } from '../../utils/isNextShift.ts';
 import { getActivePlayer } from '../../utils/getActivePlayer.ts';
-import { getAccidentDifficultlyByPrizeNumber, isAllPlayersReady } from '../../utils/game.ts';
+import {
+  getAccidentDifficultlyByPrizeNumber,
+  getActiveDefendsCount,
+  getNotActiveDefendsCount,
+  isAllPlayersReady
+} from '../../utils/game.ts';
 
 export default (io: any, socket: any) => {
   async function joinGame(data: JoinGameOptions) {
@@ -47,83 +52,55 @@ export default (io: any, socket: any) => {
 
       if (result.status === 'success') {
         io.to(socket.roomId).emit('game:roll', result);
+        await GameController.updateShowRollResultMode(socket.roomId, 'true');
 
         const accidentDifficultly = getAccidentDifficultlyByPrizeNumber(result.result?.prizeNumber);
+        const accidentDifficultlyNumber = parseInt(accidentDifficultly);
         const userId = result.result?.lastTurn.player_id;
         const playerState = await GameController.getPlayerState(socket.roomId, userId);
+        const activeDefends = getActiveDefendsCount(playerState, playerState.active_worker);
+        const notActiveDefends = getNotActiveDefendsCount(playerState, playerState.active_worker);
+
+        // refresh
+        await GameController.updatePlayerNextWorkerMode(socket.roomId, playerState.player_id, 'false');
+        await GameController.updateNextWorkerQuestionsCount(socket.roomId, playerState.player_id, 0);
+
+        // update
+        await Game.updateAccidentDiff(playerState.player_id, socket.roomId, parseInt(accidentDifficultly));
 
         switch (accidentDifficultly) {
           case '0':
             // Бонус
-            // updateAccidentDiff
-            // updateQuestionsToActivateDef
-            // updateQuestionsWithoutDef
-            // updateDefendsCount
-            // updateActiveWorker
             await GameController.onRollBonus(socket.roomId, playerState);
             break;
-
-          case '1':
-            // Микро
-            // updateAccidentDiff
-
-            // проверяем активные >= AccidentDiff
-            // если больше то
-              // updateQuestionsToActivateDef = 0 [1]
-              // updateQuestionsWithoutDef = 0
-              // updateActiveWorker
-              // updateNextWorker
-            // иначе
-              // если есть неактивные
-                // updateQuestionsToActivateDef = число неактивных защит на этой клетке
-                // отвечаем пока не наберем 1 защиту или defends < 1
-                // отвечаем пока не наберем 1 защиту defends-- updateDefends--
-                  // если набрал выходим в [1]
-              // updateQuestionsWithoutDef = 1
-                // отвечаем, если ошибка
-                  // Штраф 1 монета, если есть,
-                // Если верно
-                  // Ничего
-              // updateQuestionsToActivateDef = 0 [1]
-              // updateQuestionsWithoutDef = 0
-              // updateActiveWorker
-              // updateNextWorker
-              // Выход
-
-
-            // updateQuestionsWithoutDef
-
-            // После ответов updateActiveWorker
-
-            break;
-
-          case '2':
-            // Микро
-
-            break;
-
-          case '4':
-            // Травма
-
-            break;
-
-          case '5':
-            // Травма
-
-            break;
-
           case '3 + 1':
-            // Групповой
-
-            break;
-
           case '6 + 1':
-            // Групповой
-
-            break;
-
+            // update next worker index
+            // update next worker mode
+            // update next worker questions count
+            await GameController.updatePlayerNextWorkerIndex(socket.roomId, playerState);
+            await GameController.updatePlayerNextWorkerMode(socket.roomId, playerState.player_id, 'true');
+            await GameController.updateNextWorkerQuestionsCount(socket.roomId, playerState.player_id, 1);
           default:
+            // Травма
+            if(activeDefends >= accidentDifficultlyNumber) {
 
+            } else {
+              const needToActivateDefendsCount = accidentDifficultlyNumber - activeDefends;
+              let newQuestionsToActivateDefCount = 0;
+
+              if(notActiveDefends > needToActivateDefendsCount) {
+                newQuestionsToActivateDefCount = needToActivateDefendsCount;
+              } else {
+                newQuestionsToActivateDefCount = notActiveDefends;
+              }
+
+              await GameController.updateQuestionsToActivateDef(playerState.player_id, socket.roomId, newQuestionsToActivateDefCount);
+              await GameController.updateQuestionsWithoutDef(
+                playerState.player_id, socket.roomId, accidentDifficultlyNumber - activeDefends
+              );
+              // await GameController.onAccident(socket.roomId, playerState);
+            }
             break;
         }
 

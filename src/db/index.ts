@@ -37,7 +37,8 @@ await db.exec(`
       end_date TEXT,
       moderator_mode TEXT,
       answers_mode TEXT,
-      shift_change_mode TEXT
+      shift_change_mode TEXT,
+      show_roll_result_mode TEXT
   );
 `);
 

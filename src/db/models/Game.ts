@@ -13,6 +13,7 @@ export interface CreateGameData {
   moderatorMode: boolean,
   answersMode: 'true' | 'false',
   shiftChangeMode: 'true' | 'false',
+  showRollResultMode: 'true' | 'false'
 }
 export interface GameReadOptions {
   id?: number,
@@ -35,6 +36,7 @@ class Game extends BaseModel {
       moderatorMode,
       answersMode,
       shiftChangeMode,
+      showRollResultMode,
     } = data;
     return db.run(
       `INSERT INTO 
@@ -42,13 +44,15 @@ class Game extends BaseModel {
             title, 
             status, 
             players_count, 
-            moderator, creation_date, moderator_mode, answers_mode, shift_change_mode) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            moderator, 
+            creation_date, moderator_mode, answers_mode, shift_change_mode, show_roll_result_mode) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
-      [title,
+      [
+        title,
         status,
         playersCount,
-        moderator, creationDate, moderatorMode, answersMode, shiftChangeMode],
+        moderator, creationDate, moderatorMode, answersMode, shiftChangeMode, showRollResultMode],
     );
   }
 
@@ -178,6 +182,10 @@ class Game extends BaseModel {
     return db.run('UPDATE games SET shift_change_mode = ? WHERE id = ?', shiftChangeMode, gameId);
   }
 
+  async updateShowRollResultMode(gameId: number, showRollResultMode: string) {
+    return db.run('UPDATE games SET show_roll_result_mode = ? WHERE id = ?', showRollResultMode, gameId);
+  }
+
   async getPlayersStateByGameId(gameId: number) {
     return db.all('SELECT * FROM players_state WHERE game_id = ? ORDER BY id ASC', gameId);
   }
@@ -257,6 +265,22 @@ class Game extends BaseModel {
     return db.run(
       'UPDATE players_state SET next_worker_index = ? WHERE player_id = ? AND game_id = ?',
       nexWorkerIndex,
+      userId,
+      gameId,
+    );
+  }
+  async updatePlayerNextWorkerMode(userId: number, gameId: number, nextWorkerMode: string) {
+    return db.run(
+      'UPDATE players_state SET next_worker_mode = ? WHERE player_id = ? AND game_id = ?',
+      nextWorkerMode,
+      userId,
+      gameId,
+    );
+  }
+  async updateNextWorkerQuestionsCount(userId: number, gameId: number, newQuestionsCount: number) {
+    return db.run(
+      'UPDATE players_state SET questions_to_next_worker_count = ? WHERE player_id = ? AND game_id = ?',
+      newQuestionsCount,
       userId,
       gameId,
     );

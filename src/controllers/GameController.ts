@@ -444,8 +444,8 @@ class GameController {
 
   async applyPunishment(gameId: number, playerState: any) {
     switch (playerState.accident_difficultly) {
-      case '1':
-      case '2':
+      case 1:
+      case 2:
         if(playerState.money > 0)
         await Game.updatePlayerMoney(playerState.player_id, gameId, playerState.money - 1);
         break;
@@ -477,7 +477,6 @@ class GameController {
       playerState.active_worker,
       addingCount,
     );
-    console.log(notActiveDefendsScheme, addingCount);
     await Game.updateWorkerNotActiveDefends(playerState.player_id, gameId, notActiveDefendsScheme);
   }
 

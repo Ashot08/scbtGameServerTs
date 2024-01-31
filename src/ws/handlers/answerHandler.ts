@@ -4,6 +4,7 @@ import AnswerController from '../../controllers/AnswerController.ts';
 export default (io: any, socket: any) => {
   async function startAnswers() {
     try {
+      console.log('Start answer');
       const result = await AnswerController.createAnswers(socket.roomId);
       if (!result) throw new Error('Create Answers error');
 
@@ -11,6 +12,7 @@ export default (io: any, socket: any) => {
 
       const gameState = await GameController.getState(socket.roomId);
       io.to(socket.roomId).emit('game:updateState', gameState);
+      console.log('End answer');
     } catch (e) {
       socket.emit('notification', { status: 'error', message: 'Create Answers error' });
     }
@@ -72,7 +74,7 @@ export default (io: any, socket: any) => {
           await GameController.updateQuestionsToActivateDef(
             playerState.player_id,
             socket.roomId,
-            -1,
+            questionsToActivateDefCount - 1,
           );
           await GameController.updateNotActiveDefends(
             socket.roomId,

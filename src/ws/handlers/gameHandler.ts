@@ -8,8 +8,8 @@ import { isNextShift } from '../../utils/isNextShift.ts';
 import { getActivePlayer } from '../../utils/getActivePlayer.ts';
 import {
   getAccidentDifficultlyByPrizeNumber,
-  getActiveDefendsCount,
-  getNotActiveDefendsCount,
+  getActiveDefendsCount, getNextWorkerIndex,
+  getNotActiveDefendsCount, getWorkersOnPositionsCount,
   isAllPlayersReady,
 } from '../../utils/game.ts';
 
@@ -60,6 +60,8 @@ export default (io: any, socket: any) => {
         const playerState = await GameController.getPlayerState(socket.roomId, userId);
         const activeDefends = getActiveDefendsCount(playerState, playerState.active_worker);
         const notActiveDefends = getNotActiveDefendsCount(playerState, playerState.active_worker);
+        const nextWorkerIndex = +getNextWorkerIndex(playerState, playerState.active_worker);
+        const nextWorkerActiveDefends = +getActiveDefendsCount(playerState, nextWorkerIndex);
 
         // refresh
         await GameController.updatePlayerNextWorkerMode(socket.roomId, playerState.player_id, 'false');
@@ -67,6 +69,9 @@ export default (io: any, socket: any) => {
         await GameController.updateQuestionsToActivateDef(playerState.player_id, socket.roomId, 0);
         await GameController.updateQuestionsWithoutDef(playerState.player_id, socket.roomId, 0);
         await Game.updateNoMoreRolls(playerState.player_id, socket.roomId, 'false');
+        if(nextWorkerIndex <= playerState.active_worker) {
+          await Game.updateNoMoreRolls(playerState.player_id, socket.roomId, 'true');
+        }
 
         // update
         await Game.updateAccidentDiff(playerState.player_id, socket.roomId, accidentDifficultlyNumber);
@@ -82,8 +87,11 @@ export default (io: any, socket: any) => {
             // update next worker mode
             // update next worker questions count
             await GameController.updatePlayerNextWorkerIndex(socket.roomId, playerState);
-            await GameController.updatePlayerNextWorkerMode(socket.roomId, playerState.player_id, 'true');
-            await GameController.updateNextWorkerQuestionsCount(socket.roomId, playerState.player_id, 1);
+            if ((getWorkersOnPositionsCount(playerState) > 1) && (nextWorkerActiveDefends === 0)) {
+              // если рабочий один, или акт защит больше 0, то группового НС нет
+              await GameController.updatePlayerNextWorkerMode(socket.roomId, playerState.player_id, 'true');
+              await GameController.updateNextWorkerQuestionsCount(socket.roomId, playerState.player_id, 1);
+            }
           default:
             // Травма
             if (activeDefends >= accidentDifficultlyNumber) {
@@ -125,8 +133,8 @@ export default (io: any, socket: any) => {
       if (!result) throw new Error('Create Turn error');
 
       if (result.status === 'success') {
-        const gameState = await GameController.getState(socket.roomId);
         await GameController.updateShowRollResultMode(socket.roomId, 'false');
+        const gameState = await GameController.getState(socket.roomId);
 
         if (gameState.status === 'success') {
           const isNext = isNextShift(gameState.state?.turns);
@@ -226,7 +234,7 @@ export default (io: any, socket: any) => {
       await GameController.updateShowRollResultMode(socket.roomId, 'false');
       if (result.status === 'success') {
         const gameState = await GameController.getState(socket.roomId);
-        socket.emit('game:updateState', gameState);
+        io.to(socket.roomId).emit('game:updateState', gameState);
       }
     } catch (e) {
       socket.emit('notification', { status: 'error', message: 'goNextWorker Error' });

@@ -69,7 +69,7 @@ export default (io: any, socket: any) => {
         await GameController.updateQuestionsToActivateDef(playerState.player_id, socket.roomId, 0);
         await GameController.updateQuestionsWithoutDef(playerState.player_id, socket.roomId, 0);
         await Game.updateNoMoreRolls(playerState.player_id, socket.roomId, 'false');
-        if(nextWorkerIndex <= playerState.active_worker) {
+        if (nextWorkerIndex <= playerState.active_worker) {
           await Game.updateNoMoreRolls(playerState.player_id, socket.roomId, 'true');
         }
 
@@ -97,16 +97,16 @@ export default (io: any, socket: any) => {
             if (activeDefends >= accidentDifficultlyNumber) {
               // Exit
             } else {
-              const needToActivateDefendsCount = accidentDifficultlyNumber - activeDefends;
-              let newQuestionsToActivateDefCount = 0;
+              //const needToActivateDefendsCount = accidentDifficultlyNumber - activeDefends;
+              //let newQuestionsToActivateDefCount = 0;
 
-              if (notActiveDefends > needToActivateDefendsCount) {
-                newQuestionsToActivateDefCount = needToActivateDefendsCount;
-              } else {
-                newQuestionsToActivateDefCount = notActiveDefends;
-              }
+              // if (notActiveDefends > needToActivateDefendsCount) {
+              //   newQuestionsToActivateDefCount = needToActivateDefendsCount;
+              // } else {
+              //   newQuestionsToActivateDefCount = notActiveDefends;
+              // }
 
-              await GameController.updateQuestionsToActivateDef(playerState.player_id, socket.roomId, newQuestionsToActivateDefCount);
+              await GameController.updateQuestionsToActivateDef(playerState.player_id, socket.roomId, notActiveDefends);
               await GameController.updateQuestionsWithoutDef(
                 playerState.player_id,
                 socket.roomId,

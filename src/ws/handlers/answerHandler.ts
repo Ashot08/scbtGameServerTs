@@ -1,16 +1,19 @@
 import GameController from '../../controllers/GameController.ts';
 import AnswerController from '../../controllers/AnswerController.ts';
+import {getActiveDefendsCount} from "../../utils/game.ts";
 
 export default (io: any, socket: any) => {
   async function startAnswers() {
     try {
-      console.log('Start answer');
+      console.log('Start answer 1');
       const result = await AnswerController.createAnswers(socket.roomId);
+      console.log('Start answer 2');
       if (!result) throw new Error('Create Answers error');
-
+      console.log('Start answer 3');
       await GameController.updateAnswersMode('true', socket.roomId);
-
+      console.log('Start answer 4');
       const gameState = await GameController.getState(socket.roomId);
+      console.log('Start answer 5');
       io.to(socket.roomId).emit('game:updateState', gameState);
       console.log('End answer');
     } catch (e) {
@@ -45,18 +48,19 @@ export default (io: any, socket: any) => {
       const answer = gameState.state?.answers.find((a) => a.id === data.answerId);
 
       if (answer.is_countable === 'false') {
-        io.to(socket.roomId).emit('answer:startTimer', gameState);
+        io.to(socket.roomId).emit('answer:startTimer');
 
         setTimeout(async () => {
-          // io.to(socket.roomId).emit('answer:stopTimer', gameState);
+          io.to(socket.roomId).emit('answer:stopTimer');
           await AnswerController.updateExpiredAnswerStatus('error', socket.roomId);
           const gameState = await GameController.getState(socket.roomId);
           io.to(socket.roomId).emit('game:updateState', gameState);
         }, 3500);
 
+
         // логика ответов травма / групповая
         const playerState = await GameController.getPlayerState(socket.roomId, answer.player_id);
-        // const activeDefendsCount = +getActiveDefendsCount(playerState, playerState.active_worker);
+        const activeDefendsCount = +getActiveDefendsCount(playerState, playerState.active_worker);
         // const notActiveDefendsCount = +getNotActiveDefendsCount(playerState, playerState.active_worker);
         const questionsWithoutDefCount = playerState.questions_without_def_count;
         const questionsToActivateDefCount = playerState.questions_to_active_def_count;
@@ -92,6 +96,14 @@ export default (io: any, socket: any) => {
               socket.roomId,
               questionsWithoutDefCount - 1,
             );
+            // если активных защит стало достаточно
+            if((activeDefendsCount + 1 >= playerState.accident_difficultly)) {
+              await GameController.updateQuestionsToActivateDef(
+                playerState.player_id,
+                socket.roomId,
+                0,
+              );
+            }
           }
         } else if (questionsWithoutDefCount > 0) {
           // ответ без права на ошибку
@@ -118,6 +130,7 @@ export default (io: any, socket: any) => {
           // вопросов нет - выход из режима вопросов
           await GameController.updateAnswersMode('false', socket.roomId);
         }
+
       }
 
       io.to(socket.roomId).emit('game:updateState', gameState);

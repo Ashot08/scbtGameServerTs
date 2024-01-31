@@ -243,6 +243,15 @@ class Game extends BaseModel {
     );
   }
 
+  async updatePlayerWorkersAliveCount(userId: number, gameId: number, newWorkersAliveCount: number) {
+    return db.run(
+      'UPDATE players_state SET workers_alive = ? WHERE player_id = ? AND game_id = ?',
+      newWorkersAliveCount,
+      userId,
+      gameId,
+    );
+  }
+
   async updatePlayerReadyStatus(userId: number, gameId: number, readyStatus: string) {
     return db.run(
       'UPDATE players_state SET ready = ? WHERE player_id = ? AND game_id = ?',
@@ -269,6 +278,7 @@ class Game extends BaseModel {
       gameId,
     );
   }
+
   async updatePlayerNextWorkerMode(userId: number, gameId: number, nextWorkerMode: string) {
     return db.run(
       'UPDATE players_state SET next_worker_mode = ? WHERE player_id = ? AND game_id = ?',
@@ -277,6 +287,7 @@ class Game extends BaseModel {
       gameId,
     );
   }
+
   async updateNextWorkerQuestionsCount(userId: number, gameId: number, newQuestionsCount: number) {
     return db.run(
       'UPDATE players_state SET questions_to_next_worker_count = ? WHERE player_id = ? AND game_id = ?',

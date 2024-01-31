@@ -10,7 +10,7 @@ import {
   getAccidentDifficultlyByPrizeNumber,
   getActiveDefendsCount,
   getNotActiveDefendsCount,
-  isAllPlayersReady
+  isAllPlayersReady,
 } from '../../utils/game.ts';
 
 export default (io: any, socket: any) => {
@@ -55,7 +55,7 @@ export default (io: any, socket: any) => {
         await GameController.updateShowRollResultMode(socket.roomId, 'true');
 
         const accidentDifficultly = getAccidentDifficultlyByPrizeNumber(result.result?.prizeNumber);
-        const accidentDifficultlyNumber = parseInt(accidentDifficultly);
+        const accidentDifficultlyNumber = parseInt(accidentDifficultly, 10);
         const userId = result.result?.lastTurn.player_id;
         const playerState = await GameController.getPlayerState(socket.roomId, userId);
         const activeDefends = getActiveDefendsCount(playerState, playerState.active_worker);
@@ -64,9 +64,12 @@ export default (io: any, socket: any) => {
         // refresh
         await GameController.updatePlayerNextWorkerMode(socket.roomId, playerState.player_id, 'false');
         await GameController.updateNextWorkerQuestionsCount(socket.roomId, playerState.player_id, 0);
+        await GameController.updateQuestionsToActivateDef(playerState.player_id, socket.roomId, 0);
+        await GameController.updateQuestionsWithoutDef(playerState.player_id, socket.roomId, 0);
+        await Game.updateNoMoreRolls(playerState.player_id, socket.roomId, 'false');
 
         // update
-        await Game.updateAccidentDiff(playerState.player_id, socket.roomId, parseInt(accidentDifficultly));
+        await Game.updateAccidentDiff(playerState.player_id, socket.roomId, accidentDifficultlyNumber);
 
         switch (accidentDifficultly) {
           case '0':
@@ -83,13 +86,13 @@ export default (io: any, socket: any) => {
             await GameController.updateNextWorkerQuestionsCount(socket.roomId, playerState.player_id, 1);
           default:
             // Травма
-            if(activeDefends >= accidentDifficultlyNumber) {
-
+            if (activeDefends >= accidentDifficultlyNumber) {
+              // Exit
             } else {
               const needToActivateDefendsCount = accidentDifficultlyNumber - activeDefends;
               let newQuestionsToActivateDefCount = 0;
 
-              if(notActiveDefends > needToActivateDefendsCount) {
+              if (notActiveDefends > needToActivateDefendsCount) {
                 newQuestionsToActivateDefCount = needToActivateDefendsCount;
               } else {
                 newQuestionsToActivateDefCount = notActiveDefends;
@@ -97,9 +100,10 @@ export default (io: any, socket: any) => {
 
               await GameController.updateQuestionsToActivateDef(playerState.player_id, socket.roomId, newQuestionsToActivateDefCount);
               await GameController.updateQuestionsWithoutDef(
-                playerState.player_id, socket.roomId, accidentDifficultlyNumber - activeDefends
+                playerState.player_id,
+                socket.roomId,
+                accidentDifficultlyNumber - activeDefends,
               );
-              // await GameController.onAccident(socket.roomId, playerState);
             }
             break;
         }
@@ -122,6 +126,7 @@ export default (io: any, socket: any) => {
 
       if (result.status === 'success') {
         const gameState = await GameController.getState(socket.roomId);
+        await GameController.updateShowRollResultMode(socket.roomId, 'false');
 
         if (gameState.status === 'success') {
           const isNext = isNextShift(gameState.state?.turns);
@@ -214,6 +219,20 @@ export default (io: any, socket: any) => {
     }
   }
 
+  async function goNextWorker(data: any) {
+    try {
+      const playerState = await GameController.getPlayerState(socket.roomId, data.activePlayerId);
+      const result = await GameController.goNextWorker(socket.roomId, playerState);
+      await GameController.updateShowRollResultMode(socket.roomId, 'false');
+      if (result.status === 'success') {
+        const gameState = await GameController.getState(socket.roomId);
+        socket.emit('game:updateState', gameState);
+      }
+    } catch (e) {
+      socket.emit('notification', { status: 'error', message: 'goNextWorker Error' });
+    }
+  }
+
   socket.on('game:join', joinGame);
   socket.on('game:getState', getState);
   socket.on('game:create_roll', roll);
@@ -222,4 +241,5 @@ export default (io: any, socket: any) => {
   socket.on('game:update_worker_data', updateWorkerData);
   socket.on('game:buy_defends', buyDefends);
   socket.on('game:change_ready_status', changeReadyStatus);
+  socket.on('game:go_next_worker', goNextWorker);
 };

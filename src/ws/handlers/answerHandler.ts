@@ -1,12 +1,5 @@
 import GameController from '../../controllers/GameController.ts';
 import AnswerController from '../../controllers/AnswerController.ts';
-import {
-  getActiveDefendsCount, getNewActiveDefendsScheme,
-  getNewWorkersPositionsScheme,
-  getNextWorkerIndex,
-  getNotActiveDefendsCount,
-} from '../../utils/game.ts';
-import Game from '../../db/models/Game.ts';
 
 export default (io: any, socket: any) => {
   async function startAnswers() {
@@ -27,7 +20,7 @@ export default (io: any, socket: any) => {
     try {
       const result = await AnswerController.updateExpiredAnswerStatus('error', socket.roomId);
       if (!result) throw new Error('updateExpiredAnswerStatus error');
-
+      // await GameController.updateShowRollResultMode(socket.roomId, 'false');
       await GameController.updateAnswersMode('false', socket.roomId);
 
       const gameState = await GameController.getState(socket.roomId);
@@ -60,64 +53,68 @@ export default (io: any, socket: any) => {
         }, 3500);
 
         // логика ответов травма / групповая
-        let playerState = await GameController.getPlayerState(socket.roomId, answer.player_id);
-        const activeDefendsCount = +getActiveDefendsCount(playerState, playerState.active_worker);
-        const notActiveDefendsCount = +getNotActiveDefendsCount(playerState, playerState.active_worker);
-        let questionsWithoutDefCount = playerState.questions_without_def_count;
-        let questionsToActivateDefCount = playerState.questions_to_active_def_count;
-        const accidentDifficultly = playerState.accident_difficultly;
+        const playerState = await GameController.getPlayerState(socket.roomId, answer.player_id);
+        // const activeDefendsCount = +getActiveDefendsCount(playerState, playerState.active_worker);
+        // const notActiveDefendsCount = +getNotActiveDefendsCount(playerState, playerState.active_worker);
+        const questionsWithoutDefCount = playerState.questions_without_def_count;
+        const questionsToActivateDefCount = playerState.questions_to_active_def_count;
+        const questionsToNextWorkerCount = playerState.questions_to_next_worker_count;
+        // const accidentDifficultly = playerState.accident_difficultly;
+        // const accidentDifficultlyNumber = parseInt(accidentDifficultly, 10);
         // травма
 
-        if (data.status === 'error') {
-          if (notActiveDefendsCount) {
-            await GameController.updateNotActiveDefends(socket.roomId, playerState, -1);
-            await Game.updateQuestionsToActivateDef(playerState.player_id, socket.roomId, notActiveDefendsCount - 1);
-          } else if (questionsWithoutDefCount) {
-            // Проигрыш
-            await Game.updateQuestionsWithoutDef(playerState.player_id, socket.roomId, 0);
-            if (accidentDifficultly > 2) {
-              const newWorkersScheme = getNewWorkersPositionsScheme(playerState, playerState.active_worker, true);
-              await Game.updateWorkersPositions(playerState.player_id, socket.roomId, newWorkersScheme);
-              io.to(socket.roomId).emit('game:workerFail', { status: 'Потеря' });
-            } else {
-              if (playerState.money > 0) {
-                await Game.updatePlayerMoney(playerState.player_id, socket.roomId, playerState.money - 1);
-              }
-              io.to(socket.roomId).emit('game:workerFail', { status: 'Штраф' });
-            }
-            let nextWorker = getNextWorkerIndex(playerState, playerState.active_worker);
-            await Game.updatePlayerActiveWorker(playerState.player_id, socket.roomId, nextWorker);
-            nextWorker = getNextWorkerIndex(playerState, nextWorker);
-            await Game.updatePlayerNextWorkerIndex(playerState.player_id, socket.roomId, nextWorker);
-            await Game.updateQuestionsWithoutDef(playerState.player_id, socket.roomId, 0);
-            await Game.updateAccidentDiff(playerState.player_id, socket.roomId, 100);
-            await GameController.updateAnswersMode('false', socket.roomId);
-          }
-        }
+        // io.to(socket.roomId).emit('game:workerFail', { status: 'Потеря' });
+        // io.to(socket.roomId).emit('game:workerFail', { status: 'Штраф' });
+        // io.to(socket.roomId).emit('game:workerSaved', { status: 'Спасен' });
 
-        if (data.status === 'success') {
-          if (notActiveDefendsCount) {
-            await Game.updateQuestionsToActivateDef(playerState.player_id, socket.roomId, activeDefendsCount - 1);
-            const newActiveDefendsScheme = getNewActiveDefendsScheme(playerState, playerState.active_worker, 1);
-            await Game.updateWorkerActiveDefends(playerState.player_id, socket.roomId, newActiveDefendsScheme);
-            // add active def
-          } else if (questionsWithoutDefCount) {
-            await Game.updateQuestionsWithoutDef(playerState.player_id, socket.roomId, questionsWithoutDefCount - 1);
+        // проверяем неактивные защиты
+        if (questionsToActivateDefCount > 0) {
+          await GameController.updateQuestionsToActivateDef(
+            playerState.player_id,
+            socket.roomId,
+            -1,
+          );
+          await GameController.updateNotActiveDefends(
+            socket.roomId,
+            playerState,
+            -1,
+          );
+          if (data.status === 'success') {
+            await GameController.updateActiveDefends(
+              socket.roomId,
+              playerState,
+              1,
+            );
+            await GameController.updateQuestionsWithoutDef(
+              playerState.player_id,
+              socket.roomId,
+              questionsWithoutDefCount - 1,
+            );
           }
-          playerState = await GameController.getPlayerState(socket.roomId, answer.player_id);
-          questionsWithoutDefCount = playerState.questions_without_def_count;
-          questionsToActivateDefCount = playerState.questions_to_active_def_count;
-          if (questionsWithoutDefCount === 0 && questionsToActivateDefCount === 0) {
-            // Выход
-            let nextWorker = getNextWorkerIndex(playerState, playerState.active_worker);
-            await Game.updatePlayerActiveWorker(playerState.player_id, socket.roomId, nextWorker);
-            nextWorker = getNextWorkerIndex(playerState, nextWorker);
-            await Game.updatePlayerNextWorkerIndex(playerState.player_id, socket.roomId, nextWorker);
-            await Game.updateQuestionsWithoutDef(playerState.player_id, socket.roomId, 0);
-            await Game.updateAccidentDiff(playerState.player_id, socket.roomId, 100);
-            await GameController.updateAnswersMode('false', socket.roomId);
-            io.to(socket.roomId).emit('game:workerSaved', { status: 'Спасен' });
+        } else if (questionsWithoutDefCount > 0) {
+          // ответ без права на ошибку
+          const newCount = data.status === 'error' ? 0 : questionsWithoutDefCount - 1;
+          await GameController.updateQuestionsWithoutDef(
+            playerState.player_id,
+            socket.roomId,
+            newCount,
+          );
+          if (data.status === 'error') {
+            await GameController.applyPunishment(socket.roomId, playerState);
           }
+        } else if (questionsToNextWorkerCount > 0) {
+          // проверка соседнего рабочего при групповом НС
+          await GameController.updateNextWorkerQuestionsCount(
+            socket.roomId,
+            playerState.player_id,
+            questionsToNextWorkerCount - 1,
+          );
+          if (data.status === 'error') {
+            await GameController.applyNextWorkerPunishment(socket.roomId, playerState);
+          }
+        } else {
+          // вопросов нет - выход из режима вопросов
+          await GameController.updateAnswersMode('false', socket.roomId);
         }
       }
 

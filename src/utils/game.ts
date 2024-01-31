@@ -29,6 +29,9 @@ export const getNewNotActiveDefendsScheme = (
   if (addedDefendsArray[workerIndex] > 6) {
     addedDefendsArray[workerIndex] = 6;
   }
+  if (addedDefendsArray[workerIndex] < 0) {
+    addedDefendsArray[workerIndex] = 0;
+  }
   return addedDefendsArray.join(',');
 };
 
@@ -42,6 +45,9 @@ export const getNewActiveDefendsScheme = (
 
   if (addedDefendsArray[workerIndex] > 6) {
     addedDefendsArray[workerIndex] = 6;
+  }
+  if (addedDefendsArray[workerIndex] < 0) {
+    addedDefendsArray[workerIndex] = 0;
   }
   return addedDefendsArray.join(',');
 };
@@ -94,7 +100,7 @@ export const getNextWorkerIndex = (playerState: any, activeWorkerIndex: number) 
 };
 
 export const getAccidentDifficultlyByPrizeNumber = (prizeNumber: number | undefined) => {
-  if (!prizeNumber) {
+  if (prizeNumber === undefined) {
     prizeNumber = 1;
   }
   const accidentDifficultly = ['6 + 1', '0', '4', '1', '5', '2', '3 + 1', '1'];

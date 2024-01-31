@@ -8,6 +8,7 @@ import { getNextTurn } from '../utils/getNextTurn.ts';
 import Answer from '../db/models/Answer.ts';
 import Question from '../db/models/Question.ts';
 import {
+  getNewActiveDefendsScheme,
   getNewNotActiveDefendsScheme,
   getNewWorkersPositionsScheme, getNextWorkerIndex,
   getWorkersOnPositionsCount, getWorkersPositionsFirstIndex,
@@ -355,7 +356,6 @@ class GameController {
     return { status: 'error', message: 'updateShowRollResultMode' };
   }
 
-
   async paySalaryAndUpdateNoMoreRolls(gameId: number) {
     const playersState = await Game.getPlayersStateByGameId(gameId);
     for (const p of playersState) {
@@ -426,14 +426,68 @@ class GameController {
     return {status: 'success', message: 'onAccident'};
   }
 
-  async updateNotActiveDefends(gameId: number, playerState: any, newNotActiveDefsCount: number){
+  async goNextWorker(gameId: number, playerState: any) {
+    // await Game.updateQuestionsToActivateDef(playerState.player_id, gameId, 0);
+    // await Game.updateQuestionsWithoutDef(playerState.player_id, gameId, 0);
+    // Переход к следующему рабочему
+    let activeWorkerIndex = playerState.active_worker;
+    let nextWorker = getNextWorkerIndex(playerState, activeWorkerIndex);
+    if(!nextWorker || (nextWorker < activeWorkerIndex)) {
+      await Game.updateNoMoreRolls(playerState.player_id, gameId, 'true');
+    } else {
+      await Game.updatePlayerActiveWorker(playerState.player_id, gameId, nextWorker);
+      nextWorker = getNextWorkerIndex(playerState, nextWorker);
+      await Game.updatePlayerNextWorkerIndex(playerState.player_id, gameId, nextWorker);
+    }
+    return {status: 'success', message: 'onNextWorker'};
+  }
+
+  async applyPunishment(gameId: number, playerState: any) {
+    switch (playerState.accident_difficultly) {
+      case '1':
+      case '2':
+        if(playerState.money > 0)
+        await Game.updatePlayerMoney(playerState.player_id, gameId, playerState.money - 1);
+        break;
+      default:
+        const newWorkersScheme = getNewWorkersPositionsScheme(playerState, playerState.active_worker, true);
+        await Game.updateWorkersPositions(playerState.player_id, gameId, newWorkersScheme);
+        if(playerState.workers_alive > 0) {
+          await Game.updatePlayerWorkersAliveCount(
+            playerState.player_id,
+            gameId,
+            playerState.workers_alive - 1
+          );
+        }
+        break;
+    }
+    return {status: 'success', message: 'applyPunishment'};
+  }
+
+  async applyNextWorkerPunishment(gameId: number, playerState: any) {
+    if (playerState.money > 0) {
+      await Game.updatePlayerMoney(playerState.player_id, gameId, playerState.money - 1);
+    }
+    return {status: 'success', message: 'applyPunishment'};
+  }
+
+  async updateNotActiveDefends(gameId: number, playerState: any, addingCount: number){
     const notActiveDefendsScheme = getNewNotActiveDefendsScheme(
       playerState,
       playerState.active_worker,
-      newNotActiveDefsCount,
+      addingCount,
     );
-    console.log(notActiveDefendsScheme, newNotActiveDefsCount);
+    console.log(notActiveDefendsScheme, addingCount);
     await Game.updateWorkerNotActiveDefends(playerState.player_id, gameId, notActiveDefendsScheme);
+  }
+
+  async updateActiveDefends(gameId: number, playerState: any, addingCount: number){
+    const activeDefendsScheme = getNewActiveDefendsScheme(
+      playerState,
+      playerState.active_worker,
+      addingCount,
+    );
+    await Game.updateWorkerActiveDefends(playerState.player_id, gameId, activeDefendsScheme);
   }
 
   async updatePlayerNextWorkerIndex(gameId: number, playerState: any){
@@ -451,10 +505,16 @@ class GameController {
   }
 
   async updateQuestionsToActivateDef(userId: number, gameId: number, questionsToActivateDefCount: number) {
+    if(questionsToActivateDefCount < 0) {
+      questionsToActivateDefCount = 0;
+    }
     await Game.updateQuestionsToActivateDef(userId, gameId, questionsToActivateDefCount);
   }
 
   async updateQuestionsWithoutDef(userId: number, gameId: number, questionsWithoutDefCount: number) {
+    if(questionsWithoutDefCount < 0) {
+      questionsWithoutDefCount = 0;
+    }
     await Game.updateQuestionsWithoutDef(userId, gameId, questionsWithoutDefCount);
   }
 

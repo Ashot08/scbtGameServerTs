@@ -27,7 +27,8 @@
     "sqlite3": "^5.1.6",
     "ts-node": "^10.9.1",
     "vite": "^4.4.5",
-    "vite-plugin-checker": "^0.6.2"
+    "vite-plugin-checker": "^0.6.2",
+    "@socket.io/pm2": "latest"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.1",

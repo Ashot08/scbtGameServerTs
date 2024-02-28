@@ -97,8 +97,8 @@ export default (io: any, socket: any) => {
             if (activeDefends >= accidentDifficultlyNumber) {
               // Exit
             } else {
-              //const needToActivateDefendsCount = accidentDifficultlyNumber - activeDefends;
-              //let newQuestionsToActivateDefCount = 0;
+              // const needToActivateDefendsCount = accidentDifficultlyNumber - activeDefends;
+              // let newQuestionsToActivateDefCount = 0;
 
               // if (notActiveDefends > needToActivateDefendsCount) {
               //   newQuestionsToActivateDefCount = needToActivateDefendsCount;

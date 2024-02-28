@@ -1,6 +1,6 @@
 import GameController from '../../controllers/GameController.ts';
 import AnswerController from '../../controllers/AnswerController.ts';
-import {getActiveDefendsCount} from "../../utils/game.ts";
+import { getActiveDefendsCount } from '../../utils/game.ts';
 
 export default (io: any, socket: any) => {
   async function startAnswers() {
@@ -56,7 +56,8 @@ export default (io: any, socket: any) => {
           const gameState = await GameController.getState(socket.roomId);
           io.to(socket.roomId).emit('game:updateState', gameState);
         }, 3500);
-
+        // * Если выключаем и включаем при этом **, то ловим баг с таймером
+        io.to(socket.roomId).emit('game:updateState', gameState);
 
         // логика ответов травма / групповая
         const playerState = await GameController.getPlayerState(socket.roomId, answer.player_id);
@@ -97,12 +98,13 @@ export default (io: any, socket: any) => {
               questionsWithoutDefCount - 1,
             );
             // если активных защит стало достаточно
-            if((activeDefendsCount + 1 >= playerState.accident_difficultly)) {
+            if ((activeDefendsCount + 1 >= playerState.accident_difficultly)) {
               await GameController.updateQuestionsToActivateDef(
                 playerState.player_id,
                 socket.roomId,
                 0,
               );
+              socket.emit('game:workerSaved', { status: 'Спасен' });
             }
           }
         } else if (questionsWithoutDefCount > 0) {
@@ -115,6 +117,16 @@ export default (io: any, socket: any) => {
           );
           if (data.status === 'error') {
             await GameController.applyPunishment(socket.roomId, playerState);
+            if (playerState.accident_difficultly > 2) {
+              socket.emit('game:workerFail', { status: 'Потеря' });
+            } else {
+              socket.emit('game:workerFail', { status: 'Штраф' });
+            }
+          }
+          if (data.status === 'success') {
+            if (questionsWithoutDefCount < 2) {
+              socket.emit('game:workerSaved', { status: 'Спасен' });
+            }
           }
         } else if (questionsToNextWorkerCount > 0) {
           // проверка соседнего рабочего при групповом НС
@@ -125,15 +137,18 @@ export default (io: any, socket: any) => {
           );
           if (data.status === 'error') {
             await GameController.applyNextWorkerPunishment(socket.roomId, playerState);
+            socket.emit('game:workerFail', { status: 'Штраф' });
+          }
+          if (data.status === 'success') {
+            socket.emit('game:workerSaved', { status: 'Спасен' });
           }
         } else {
           // вопросов нет - выход из режима вопросов
           await GameController.updateAnswersMode('false', socket.roomId);
         }
-
       }
-
-      io.to(socket.roomId).emit('game:updateState', gameState);
+      // Если включаем и выключаем при этом *, то ловим баг с таймером
+      // ** io.to(socket.roomId).emit('game:updateState', gameState);
     } catch (e) {
       socket.emit('notification', { status: 'error', message: 'Create Answers error' });
     }

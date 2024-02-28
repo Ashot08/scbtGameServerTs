@@ -16,7 +16,6 @@ class AnswerController {
       if (!Array.isArray(turns) || !Array.isArray(players) || !players.length || !turns.length) {
         console.log('Create answers 5');
         return { status: 'error', message: 'Ошибка создания ответов' };
-        console.log('Create answers 6');
       }
       console.log('Create answers 7');
       const lastTurn = turns.slice(-1)[0];
@@ -39,7 +38,7 @@ class AnswerController {
       let result = null;
       console.log('Create answers 15');
       for (const player of players) {
-        console.log('Create answers 16_' + player.id);
+        console.log(`Create answers 16_${player.id}`);
         const isCountable: 'true' | 'false' = (player.id === lastTurn.player_id) ? 'false' : 'true';
 
         // eslint-disable-next-line no-await-in-loop
@@ -52,7 +51,7 @@ class AnswerController {
           isCountable,
           status: 'in_process',
         });
-        console.log('Create answers 17_' + player.id);
+        console.log(`Create answers 17_${player.id}`);
       }
       console.log('Create answers 18');
       if (result?.lastID) {

@@ -8,9 +8,10 @@ import { getNextTurn } from '../utils/getNextTurn.ts';
 import Answer from '../db/models/Answer.ts';
 import Question from '../db/models/Question.ts';
 import {
+  getActiveDefendsCount,
   getNewActiveDefendsScheme,
   getNewNotActiveDefendsScheme,
-  getNewWorkersPositionsScheme, getNextWorkerIndex,
+  getNewWorkersPositionsScheme, getNextWorkerIndex, getNotActiveDefendsCount,
   getWorkersOnPositionsCount, getWorkersPositionsFirstIndex,
 } from '../utils/game.ts';
 
@@ -145,6 +146,27 @@ class GameController {
     return { status: 'error', message: 'Игрок не добавлен в игру' };
   }
 
+  async deletePlayerFromGame(gameId: number, playerId: number) {
+    try {
+      const result = await Game.deletePlayerFromGame({gameId, playerId});
+      await Game.deletePlayerState(gameId, playerId);
+      console.log(result);
+      return { status: 'success', message: 'deletePlayerFromGame success' };
+    } catch (e) {
+      return { status: 'error', message: 'deletePlayerFromGame controller error' };
+    }
+  }
+
+  async deleteTurn(gameId: number, playerId: number) {
+    try {
+      const result = await Game.deleteTurn(gameId, playerId);
+      console.log(result);
+      return { status: 'success', message: 'deleteTurns success' };
+    } catch (e) {
+      return { status: 'error', message: 'deleteTurns controller error' };
+    }
+  }
+
   async getState(gameId: number) {
     try {
       let game = await Game.read({ id: gameId });
@@ -227,11 +249,47 @@ class GameController {
       if (!Array.isArray(turns) || !Array.isArray(players) || !players.length || !turns.length) {
         return { status: 'error', message: 'Ошибка создания хода' };
       }
-      const lastTurn = turns.slice(-1)[0];
 
-      const { playerId, nextShift } = getNextTurn(lastTurn.player_id, players, turns);
+      const lastTurn = turns.slice(-1)[0];
+      const { playerId, nextShift } = getNextTurn(lastTurn?.player_id, players, turns);
 
       const result = await Game.createTurn(gameId, playerId, nextShift);
+
+      if (result.lastID) {
+        return {
+          status: 'success',
+          message: 'Ход успешно создан',
+          result: { result },
+        };
+      }
+      return { status: 'error', message: 'Ошибка при создании хода' };
+    } catch (e) {
+      return { status: 'error', message: 'Ошибка при создании хода' };
+    }
+  }
+
+  async createTurnOnDeletePlayer(gameId: number) {
+    try {
+      let turns = await Game.getTurns(gameId);
+      const players = await Game.getPlayersByGameId({ id: gameId });
+      let lastTurn = 0;
+
+      if(!Array.isArray(turns) || !turns.length) {
+        turns = [];
+      }
+
+      if (!Array.isArray(players) || !players.length) {
+        return { status: 'error', message: 'Ошибка создания хода' };
+      }
+
+      if(turns.length) {
+        lastTurn = turns.slice(-1)[0];
+      }
+
+      const { playerId, nextShift } = getNextTurn(lastTurn, players, turns);
+      const result = await Game.createTurn(gameId, playerId, nextShift);
+      await Game.updateAnswersMode('false', gameId);
+      await Game.updateShowRollResultMode(gameId, 'false');
 
       if (result.lastID) {
         return {
@@ -391,7 +449,19 @@ class GameController {
     await Game.updateAccidentDiff(playerState.player_id, gameId, 0);
     await Game.updateQuestionsToActivateDef(playerState.player_id, gameId, 0);
     await Game.updateQuestionsWithoutDef(playerState.player_id, gameId, 0);
-    await Game.updatePlayerDefends(playerState.player_id, gameId, playerState.defends + 1);
+    // await Game.updatePlayerDefends(playerState.player_id, gameId, playerState.defends + 1);
+    const notActiveDefendsCount = getNotActiveDefendsCount(playerState, playerState.active_worker);
+    const activeDefendsCount = getActiveDefendsCount(playerState, playerState.active_worker);
+    const totalDefendsCount = notActiveDefendsCount + activeDefendsCount;
+
+    if((notActiveDefendsCount > 0) && (totalDefendsCount >= 6)) {
+      await this.updateNotActiveDefends(
+        gameId, playerState, -1,
+      );
+    }
+    await this.updateActiveDefends(
+      gameId, playerState, 1,
+    );
 
     // Переход к следующему рабочему
     // let activeWorkerIndex = playerState.active_worker;
@@ -517,6 +587,15 @@ class GameController {
     await Game.updateQuestionsWithoutDef(userId, gameId, questionsWithoutDefCount);
   }
 
+  async updatePlayersCount(gameId: number){
+    const players = await Game.getPlayersByGameId({id: gameId});
+    if (Array.isArray(players) && players.length) {
+      await Game.updatePlayersCount(players.length, gameId);
+      return {status: 'success'}
+    } else {
+      return {status: 'error'}
+    }
+  }
 }
 
 export default new GameController();

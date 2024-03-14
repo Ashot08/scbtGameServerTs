@@ -1,4 +1,4 @@
-export function getNextTurn(lastTurnPlayerId: number, players: any, turns: any) {
+export function getNextTurn(lastTurnPlayerId: number = 0, players: any, turns: any) {
   let nextShift = 1;
   let playerId = 0;
   let newPlayerIndex = 0;

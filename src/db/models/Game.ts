@@ -81,6 +81,20 @@ class Game extends BaseModel {
     );
   }
 
+  async deletePlayerFromGame(data:JoinGameOptions) {
+    const {
+      playerId,
+      gameId,
+    } = data;
+    return db.run(
+      `DELETE
+            FROM games_players
+            WHERE game_id = ? AND player_id = ?;
+            `,
+      [gameId, playerId],
+    );
+  }
+
   async getPlayersByGameId(options: GameReadOptions) {
     if (options.hasOwnProperty('id')) {
       return db.all(
@@ -119,6 +133,10 @@ class Game extends BaseModel {
     return db.run('UPDATE games SET status = ? WHERE id = ?', status, gameId);
   }
 
+  async updatePlayersCount(count: number, gameId: number) {
+    return db.run('UPDATE games SET players_count = ? WHERE id = ?', count, gameId);
+  }
+
   async updateAnswersMode(status: 'true' | 'false', gameId: number) {
     return db.run('UPDATE games SET answers_mode = ? WHERE id = ?', status, gameId);
   }
@@ -130,6 +148,25 @@ class Game extends BaseModel {
             VALUES (?, ?, ?)
       `,
       [gameId, playerId, shift],
+    );
+  }
+
+  async deleteTurn(gameId: number, playerId: number): Promise<RunResult> {
+    return db.run(
+      `DELETE 
+            FROM turns
+            WHERE game_id = ? AND player_id = ?;
+            `,
+      [gameId, playerId],
+    );
+  }
+  async deletePlayerState(gameId: number, playerId: number): Promise<RunResult> {
+    return db.run(
+      `DELETE 
+            FROM players_state
+            WHERE game_id = ? AND player_id = ?;
+            `,
+      [gameId, playerId],
     );
   }
 

@@ -241,6 +241,43 @@ export default (io: any, socket: any) => {
     }
   }
 
+  async function deletePlayer(data: any) {
+    try {
+      const gameState = await GameController.getState(socket.roomId);
+
+      if(gameState?.state?.players === undefined) {
+        throw new TypeError('players is not an Array');
+      }
+      if(Array.isArray(gameState?.state?.players)) {
+        const player = gameState?.state?.players.filter((p)=> p.id == data.id)[0];
+        if(gameState.state.players.length > 2) {
+          const result = await GameController.deletePlayerFromGame(socket.roomId, data.id);
+          if (result.status === 'success') {
+            await  GameController.deleteTurn(socket.roomId, data.id);
+            await GameController.updatePlayersCount(socket.roomId);
+            if(data.nextTurn) {
+              await GameController.createTurnOnDeletePlayer(socket.roomId);
+            }
+            const gameState = await GameController.getState(socket.roomId);
+            io.to(socket.roomId).emit('game:updateState', gameState);
+
+            io.to(socket.roomId).emit(
+              'notification',
+              { status: 'success', message: `Игрок ${player.name ? player.name : player.username} удален` }
+            );
+          }
+        } else {
+          socket.emit('notification', { status: 'error', message: `Игрок ${player.name ? player.name : player.username} не удален. Игроков всего 2` });
+        }
+      } else {
+        throw new TypeError('players is not an Array');
+      }
+
+    } catch (e) {
+      socket.emit('notification', { status: 'error', message: 'deletePlayer Error' });
+    }
+  }
+
   socket.on('game:join', joinGame);
   socket.on('game:getState', getState);
   socket.on('game:create_roll', roll);
@@ -250,4 +287,5 @@ export default (io: any, socket: any) => {
   socket.on('game:buy_defends', buyDefends);
   socket.on('game:change_ready_status', changeReadyStatus);
   socket.on('game:go_next_worker', goNextWorker);
+  socket.on('game:delete_player', deletePlayer);
 };

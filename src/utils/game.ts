@@ -35,6 +35,7 @@ export const getNewNotActiveDefendsScheme = (
   return addedDefendsArray.join(',');
 };
 
+
 export const getNewActiveDefendsScheme = (
   playerState: any,
   workerIndex: number,

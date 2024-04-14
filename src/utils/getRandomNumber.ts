@@ -13,7 +13,7 @@ export const getRandomNumber = () => {
   let prizeNumber = 0;
   if (randomNumber <= 5) {
     prizeNumber = 0;
-  } else if (randomNumber <= 200) {
+  } else if (randomNumber <= 20) {
     prizeNumber = 1;
   } else if (randomNumber <= 31) {
     prizeNumber = 2;

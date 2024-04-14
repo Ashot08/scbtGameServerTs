@@ -5,17 +5,12 @@ import { getActiveDefendsCount } from '../../utils/game.ts';
 export default (io: any, socket: any) => {
   async function startAnswers() {
     try {
-      console.log('Start answer 1');
+      await AnswerController.updateExpiredAnswerStatus('error', socket.roomId);
       const result = await AnswerController.createAnswers(socket.roomId);
-      console.log('Start answer 2');
       if (!result) throw new Error('Create Answers error');
-      console.log('Start answer 3');
       await GameController.updateAnswersMode('true', socket.roomId);
-      console.log('Start answer 4');
       const gameState = await GameController.getState(socket.roomId);
-      console.log('Start answer 5');
       io.to(socket.roomId).emit('game:updateState', gameState);
-      console.log('End answer');
     } catch (e) {
       socket.emit('notification', { status: 'error', message: 'Create Answers error' });
     }
@@ -48,16 +43,15 @@ export default (io: any, socket: any) => {
       const answer = gameState.state?.answers.find((a) => a.id === data.answerId);
 
       if (answer.is_countable === 'false') {
-        io.to(socket.roomId).emit('answer:startTimer');
+        console.log('ANSW', answer);
+        // const timerId = setTimeout(async () => {
+        //   await AnswerController.updateExpiredAnswerStatus('error', socket.roomId);
+        //   const gameState = await GameController.getState(socket.roomId);
+        //   io.to(socket.roomId).emit('game:updateState', gameState);
+        //   clearTimeout(timerId);
+        // }, 4000);
 
-        setTimeout(async () => {
-          io.to(socket.roomId).emit('answer:stopTimer');
-          await AnswerController.updateExpiredAnswerStatus('error', socket.roomId);
-          const gameState = await GameController.getState(socket.roomId);
-          io.to(socket.roomId).emit('game:updateState', gameState);
-        }, 3500);
-        // * Если выключаем и включаем при этом **, то ловим баг с таймером
-        io.to(socket.roomId).emit('game:updateState', gameState);
+        // io.to(socket.roomId).emit('game:updateState', gameState);
 
         // логика ответов травма / групповая
         const playerState = await GameController.getPlayerState(socket.roomId, answer.player_id);
@@ -69,10 +63,6 @@ export default (io: any, socket: any) => {
         // const accidentDifficultly = playerState.accident_difficultly;
         // const accidentDifficultlyNumber = parseInt(accidentDifficultly, 10);
         // травма
-
-        // io.to(socket.roomId).emit('game:workerFail', { status: 'Потеря' });
-        // io.to(socket.roomId).emit('game:workerFail', { status: 'Штраф' });
-        // io.to(socket.roomId).emit('game:workerSaved', { status: 'Спасен' });
 
         // проверяем неактивные защиты
         if (questionsToActivateDefCount > 0) {
@@ -146,9 +136,14 @@ export default (io: any, socket: any) => {
           // вопросов нет - выход из режима вопросов
           await GameController.updateAnswersMode('false', socket.roomId);
         }
+
+        const gameState = await GameController.getState(socket.roomId);
+        socket.emit('game:updateState', gameState);
+        io.to(socket.roomId).emit('answer:startTimer');
+      } else {
+        const gameState = await GameController.getState(socket.roomId);
+        socket.emit('game:updateState', gameState);
       }
-      // Если включаем и выключаем при этом *, то ловим баг с таймером
-      // ** io.to(socket.roomId).emit('game:updateState', gameState);
     } catch (e) {
       socket.emit('notification', { status: 'error', message: 'Create Answers error' });
     }

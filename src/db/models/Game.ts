@@ -160,6 +160,7 @@ class Game extends BaseModel {
       [gameId, playerId],
     );
   }
+
   async deletePlayerState(gameId: number, playerId: number): Promise<RunResult> {
     return db.run(
       `DELETE 

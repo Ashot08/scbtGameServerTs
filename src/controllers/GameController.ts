@@ -148,7 +148,7 @@ class GameController {
 
   async deletePlayerFromGame(gameId: number, playerId: number) {
     try {
-      const result = await Game.deletePlayerFromGame({gameId, playerId});
+      const result = await Game.deletePlayerFromGame({ gameId, playerId });
       await Game.deletePlayerState(gameId, playerId);
       console.log(result);
       return { status: 'success', message: 'deletePlayerFromGame success' };
@@ -274,7 +274,7 @@ class GameController {
       const players = await Game.getPlayersByGameId({ id: gameId });
       let lastTurn = 0;
 
-      if(!Array.isArray(turns) || !turns.length) {
+      if (!Array.isArray(turns) || !turns.length) {
         turns = [];
       }
 
@@ -282,7 +282,7 @@ class GameController {
         return { status: 'error', message: 'Ошибка создания хода' };
       }
 
-      if(turns.length) {
+      if (turns.length) {
         lastTurn = turns.slice(-1)[0];
       }
 

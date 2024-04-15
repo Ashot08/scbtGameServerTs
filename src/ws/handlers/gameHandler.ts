@@ -278,6 +278,13 @@ export default (io: any, socket: any) => {
     }
   }
 
+  function sendChatNotification(data: any){
+    io.to(socket.roomId).emit(
+      'notification',
+      { status: 'success', message: `${data.text}` }
+    );
+  }
+
   socket.on('game:join', joinGame);
   socket.on('game:getState', getState);
   socket.on('game:create_roll', roll);
@@ -288,4 +295,5 @@ export default (io: any, socket: any) => {
   socket.on('game:change_ready_status', changeReadyStatus);
   socket.on('game:go_next_worker', goNextWorker);
   socket.on('game:delete_player', deletePlayer);
+  socket.on('game:moderator_notification', sendChatNotification);
 };

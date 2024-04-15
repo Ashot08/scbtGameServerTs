@@ -520,6 +520,9 @@ class GameController {
         await Game.updatePlayerMoney(playerState.player_id, gameId, playerState.money - 1);
         break;
       default:
+        if(playerState.money > 0) {
+          await Game.updatePlayerMoney(playerState.player_id, gameId, playerState.money - 1);
+        }
         const newWorkersScheme = getNewWorkersPositionsScheme(playerState, playerState.active_worker, true);
         await Game.updateWorkersPositions(playerState.player_id, gameId, newWorkersScheme);
         if(playerState.workers_alive > 0) {

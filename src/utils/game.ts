@@ -112,7 +112,7 @@ export const getActiveDefendsCount = (
   workerIndex: number,
 ) => {
   const activeDefendsArray = playerState.active_defends_scheme.split(',');
-  return activeDefendsArray[workerIndex];
+  return +activeDefendsArray[workerIndex];
 };
 
 export const getNotActiveDefendsCount = (

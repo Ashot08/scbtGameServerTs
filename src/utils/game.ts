@@ -65,6 +65,19 @@ export const isAllPlayersReady = (playersState: any) => {
   return allPlayersReady;
 };
 
+export const isAllPlayersReadyToStartBrigadier = (playersState: any) => {
+  let allPlayersReady = true;
+  if (Array.isArray(playersState) && playersState.length) {
+    for (const p of playersState) {
+      if (p.ready_to_start_brigadier_answers === 'false') allPlayersReady = false;
+    }
+  } else {
+    allPlayersReady = false;
+  }
+
+  return allPlayersReady;
+};
+
 export const getWorkersPositionsFirstIndex = (playerState: any) => {
   const workersPositionsArray = playerState.workers_positions_scheme.split(',');
   let activeWorkerPosition = 0;

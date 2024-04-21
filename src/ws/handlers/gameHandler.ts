@@ -10,7 +10,7 @@ import {
   getAccidentDifficultlyByPrizeNumber,
   getActiveDefendsCount, getNextWorkerIndex,
   getNotActiveDefendsCount, getWorkersOnPositionsCount,
-  isAllPlayersReady, isAllPlayersReadyToStartBrigadier,
+  isAllPlayersReady,
 } from '../../utils/game.ts';
 
 export default (io: any, socket: any) => {
@@ -97,6 +97,15 @@ export default (io: any, socket: any) => {
             if (activeDefends >= accidentDifficultlyNumber) {
               // Exit
             } else {
+              // const needToActivateDefendsCount = accidentDifficultlyNumber - activeDefends;
+              // let newQuestionsToActivateDefCount = 0;
+
+              // if (notActiveDefends > needToActivateDefendsCount) {
+              //   newQuestionsToActivateDefCount = needToActivateDefendsCount;
+              // } else {
+              //   newQuestionsToActivateDefCount = notActiveDefends;
+              // }
+
               await GameController.updateQuestionsToActivateDef(playerState.player_id, socket.roomId, notActiveDefends);
               await GameController.updateQuestionsWithoutDef(
                 playerState.player_id,
@@ -218,26 +227,6 @@ export default (io: any, socket: any) => {
     }
   }
 
-  async function changeReadyToStartBrigadier(data: ChangeReadyStatusData) {
-    try {
-      const result = await GameController.updatePlayerReadyToStartBrigadier(socket.roomId, data);
-      if (result.status === 'success') {
-        const playersState = await GameController.getPlayersStateByGameId(socket.roomId);
-
-        const allPlayersReady = isAllPlayersReadyToStartBrigadier(playersState);
-
-        if (allPlayersReady) {
-          await GameController.updateBrigadierStage('in_process', socket.roomId, );
-        }
-
-        const gameState = await GameController.getState(socket.roomId);
-        io.to(socket.roomId).emit('game:updateState', gameState);
-      }
-    } catch (e) {
-      socket.emit('notification', { status: 'error', message: 'changeReadyToStartBrigadierStatus Error' });
-    }
-  }
-
   async function goNextWorker(data: any) {
     try {
       const playerState = await GameController.getPlayerState(socket.roomId, data.activePlayerId);
@@ -289,28 +278,6 @@ export default (io: any, socket: any) => {
     }
   }
 
-  async function addDefendsFromBrigadier(data: any) {
-    const playerState = await GameController.getPlayerState(socket.roomId, data.activePlayerId);
-    const oldPlayerDefendsCount = playerState.brigadier_defends_count;
-    if(oldPlayerDefendsCount > 0) {
-      await GameController.addActiveDefend(socket.roomId, playerState, data.workerIndex);
-      await GameController.updatePlayerBrigadierDefendsCount(playerState.player_id, socket.roomId, oldPlayerDefendsCount - 1);
-
-      // const playerState = await GameController.getPlayerState(socket.roomId, data.activePlayerId);
-      // const activeDefends = getActiveDefendsCount(playerState, playerState.active_worker);
-      // const notActiveDefends = getNotActiveDefendsCount(playerState, playerState.active_worker);
-      // const nextWorkerIndex = +getNextWorkerIndex(playerState, playerState.active_worker);
-      // const nextWorkerActiveDefends = +getActiveDefendsCount(playerState, nextWorkerIndex);
-      //
-      // if(nextWorkerActiveDefends > 0) {
-      //   await GameController.updateNextWorkerQuestionsCount(socket.roomId, playerState.player_id, 0);
-      // }
-
-      const gameState = await GameController.getState(socket.roomId);
-      socket.emit('game:updateState', gameState);
-    }
-  }
-
   function sendChatNotification(data: any){
     io.to(socket.roomId).emit(
       'notification',
@@ -329,6 +296,4 @@ export default (io: any, socket: any) => {
   socket.on('game:go_next_worker', goNextWorker);
   socket.on('game:delete_player', deletePlayer);
   socket.on('game:moderator_notification', sendChatNotification);
-  socket.on('game:change_ready_to_start_brigadier', changeReadyToStartBrigadier);
-  socket.on('game:add_defend_from_brigadier', addDefendsFromBrigadier);
 };

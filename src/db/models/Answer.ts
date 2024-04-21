@@ -13,7 +13,7 @@ export interface AnswerOptions {
   playerId: number,
   rollId: number,
   questionId: number,
-  isActivePlayerQuestion: 'true' | 'false',
+  isCountable: 'true' | 'false',
   status: 'error' | 'success' | 'in_process',
 }
 class Answer extends BaseModel {
@@ -33,15 +33,15 @@ class Answer extends BaseModel {
       playerId,
       rollId,
       questionId,
-      isActivePlayerQuestion,
+      isCountable,
       status,
     } = options;
     return db.run(
       `INSERT INTO 
-            answers (turn_id, game_id, player_id, roll_id, question_id, is_active_player_question, status) 
+            answers (turn_id, game_id, player_id, roll_id, question_id, is_countable, status) 
             VALUES (?, ?, ?, ?, ?, ?, ?)
       `,
-      [turnId, gameId, playerId, rollId, questionId, isActivePlayerQuestion, status],
+      [turnId, gameId, playerId, rollId, questionId, isCountable, status],
     );
   }
 

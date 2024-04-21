@@ -13,10 +13,7 @@ export interface CreateGameData {
   moderatorMode: boolean,
   answersMode: 'true' | 'false',
   shiftChangeMode: 'true' | 'false',
-  showRollResultMode: 'true' | 'false',
-  brigadierMode: 'true' | 'false',
-  brigadierStage: 'ready' | 'in_process' | 'finished',
-  brigadierQuestionsCount: number,
+  showRollResultMode: 'true' | 'false'
 }
 export interface GameReadOptions {
   id?: number,
@@ -40,9 +37,6 @@ class Game extends BaseModel {
       answersMode,
       shiftChangeMode,
       showRollResultMode,
-      brigadierMode,
-      brigadierStage,
-      brigadierQuestionsCount,
     } = data;
     return db.run(
       `INSERT INTO 
@@ -51,20 +45,14 @@ class Game extends BaseModel {
             status, 
             players_count, 
             moderator, 
-            creation_date, 
-            moderator_mode, 
-            answers_mode, 
-            shift_change_mode, show_roll_result_mode, brigadier_mode, brigadier_stage, brigadier_questions_count) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            creation_date, moderator_mode, answers_mode, shift_change_mode, show_roll_result_mode) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
       [
         title,
         status,
         playersCount,
-        moderator,
-        creationDate,
-        moderatorMode,
-        answersMode, shiftChangeMode, showRollResultMode, brigadierMode, brigadierStage, brigadierQuestionsCount],
+        moderator, creationDate, moderatorMode, answersMode, shiftChangeMode, showRollResultMode],
     );
   }
 
@@ -153,14 +141,6 @@ class Game extends BaseModel {
     return db.run('UPDATE games SET answers_mode = ? WHERE id = ?', status, gameId);
   }
 
-  async updateBrigadierStage(status: 'ready' | 'in_process' | 'finished', gameId: number) {
-    return db.run('UPDATE games SET brigadier_stage = ? WHERE id = ?', status, gameId);
-  }
-
-  async updateBrigadierQuestionsCount(count: number, gameId: number) {
-    return db.run('UPDATE games SET brigadier_questions_count = ? WHERE id = ?', count, gameId);
-  }
-
   async createTurn(gameId: number, playerId: number, shift: number): Promise<RunResult> {
     return db.run(
       `INSERT INTO 
@@ -225,15 +205,13 @@ class Game extends BaseModel {
             next_worker_mode,
             next_worker_index,
             questions_to_next_worker_count,
-            no_more_rolls,
-            brigadier_defends_count,
-            ready_to_start_brigadier_answers 
+            no_more_rolls 
             ) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
       [gameId, playerId, 6, 0, 10, 0,
         '0,0,0,0,0,0', '0,0,0,0,0,0', '0,0,0,0,0,0',
-        0, 0, 0, 'false', 'false', 0, 0, 'false', 0, 'false',
+        0, 0, 0, 'false', 'false', 0, 0, 'false',
       ],
     );
   }
@@ -255,13 +233,6 @@ class Game extends BaseModel {
       'SELECT * FROM players_state WHERE game_id = ? AND player_id = ? ORDER BY id ASC',
       gameId,
       userId,
-    );
-  }
-
-  async getBrigadierQuestionsCount(gameId: number) {
-    return db.get(
-      'SELECT brigadier_questions_count FROM games WHERE id = ?',
-      gameId,
     );
   }
 
@@ -323,24 +294,6 @@ class Game extends BaseModel {
     return db.run(
       'UPDATE players_state SET ready = ? WHERE player_id = ? AND game_id = ?',
       readyStatus,
-      userId,
-      gameId,
-    );
-  }
-
-  async updatePlayerReadyToStartBrigadier(userId: number, gameId: number, readyStatus: string) {
-    return db.run(
-      'UPDATE players_state SET ready_to_start_brigadier_answers = ? WHERE player_id = ? AND game_id = ?',
-      readyStatus,
-      userId,
-      gameId,
-    );
-  }
-
-  async updatePlayerBrigadierDefendsCount(userId: number, gameId: number, newDefendsCount: number) {
-    return db.run(
-      'UPDATE players_state SET brigadier_defends_count = ? WHERE player_id = ? AND game_id = ?',
-      newDefendsCount,
       userId,
       gameId,
     );

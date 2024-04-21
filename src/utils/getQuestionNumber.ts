@@ -15,7 +15,7 @@ export const getQuestionNumber = (answers: any, gameQuestionCats: QuestionCatOpt
   if (Array.isArray(answers)) {
     while (
       (
-        counter < 40
+        counter < 2000
         // eslint-disable-next-line no-loop-func
           && (answers.find((a: any) => a.question_id === number))
       )

@@ -6,7 +6,9 @@ import { MAX_BRIGADIER_DEFENDS_COUNT } from '../../constants/constants.ts';
 export default (io: any, socket: any) => {
   async function startAnswers() {
     try {
+      await AnswerController.updateExpiredAnswerEndTime(socket.roomId);
       await AnswerController.updateExpiredAnswerStatus('error', socket.roomId);
+
       const result = await AnswerController.createAnswers(socket.roomId);
       if (!result) throw new Error('Create Answers error');
       await GameController.updateAnswersMode('true', socket.roomId);
@@ -22,6 +24,8 @@ export default (io: any, socket: any) => {
       const questionsCount = await GameController.getBrigadierQuestionsCount(socket.roomId);
       if (questionsCount > 0) {
         await GameController.updateBrigadierQuestionsCount(questionsCount - 1, socket.roomId);
+
+        await AnswerController.updateExpiredAnswerEndTime(socket.roomId);
         await AnswerController.updateExpiredAnswerStatus('error', socket.roomId);
         const result = await AnswerController.createBrigadierAnswers(socket.roomId);
         if (!result) throw new Error('createBrigadierAnswers error');
@@ -35,6 +39,7 @@ export default (io: any, socket: any) => {
 
   async function stopBrigadierAnswers() {
     try {
+      await AnswerController.updateExpiredAnswerEndTime(socket.roomId);
       const result = await AnswerController.updateExpiredAnswerStatus('error', socket.roomId);
       if (!result) throw new Error('updateExpiredBrigadierAnswerStatus error');
       await GameController.updateBrigadierStage('finished', socket.roomId);
@@ -48,6 +53,7 @@ export default (io: any, socket: any) => {
 
   async function stopAnswers() {
     try {
+      await AnswerController.updateExpiredAnswerEndTime(socket.roomId);
       const result = await AnswerController.updateExpiredAnswerStatus('error', socket.roomId);
       if (!result) throw new Error('updateExpiredAnswerStatus error');
       // await GameController.updateShowRollResultMode(socket.roomId, 'false');
@@ -65,6 +71,7 @@ export default (io: any, socket: any) => {
 
   async function updateAnswer(data: any) {
     try {
+      await AnswerController.updateExpiredAnswerEndTime(socket.roomId);
       const result = await AnswerController.updateAnswerStatus(data.status, data.answerId);
 
       if (!result) throw new Error('Update Answers error');
@@ -72,25 +79,14 @@ export default (io: any, socket: any) => {
 
       const answer = gameState.state?.answers.find((a) => a.id === data.answerId);
 
-      if (answer.is_active_player_question === 'false') {
-        // const timerId = setTimeout(async () => {
-        //   await AnswerController.updateExpiredAnswerStatus('error', socket.roomId);
-        //   const gameState = await GameController.getState(socket.roomId);
-        //   io.to(socket.roomId).emit('game:updateState', gameState);
-        //   clearTimeout(timerId);
-        // }, 4000);
-
-        // io.to(socket.roomId).emit('game:updateState', gameState);
-
+      if (answer.is_active_player_question === 'true') {
         // логика ответов травма / групповая
         const playerState = await GameController.getPlayerState(socket.roomId, answer.player_id);
         const activeDefendsCount = +getActiveDefendsCount(playerState, playerState.active_worker);
-        // const notActiveDefendsCount = +getNotActiveDefendsCount(playerState, playerState.active_worker);
         const questionsWithoutDefCount = playerState.questions_without_def_count;
         const questionsToActivateDefCount = playerState.questions_to_active_def_count;
         const questionsToNextWorkerCount = playerState.questions_to_next_worker_count;
-        // const accidentDifficultly = playerState.accident_difficultly;
-        // const accidentDifficultlyNumber = parseInt(accidentDifficultly, 10);
+
         // травма
 
         // проверяем неактивные защиты

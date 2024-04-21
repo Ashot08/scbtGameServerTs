@@ -13,19 +13,23 @@ export const getRandomNumber = () => {
   let prizeNumber = 0;
   if (randomNumber <= 5) {
     prizeNumber = 0;
-  } else if (randomNumber <= 20) {
+  } else if (randomNumber <= 0.20) {
     prizeNumber = 1;
-  } else if (randomNumber <= 31) {
+  } else if (randomNumber <= 0.31) {
     prizeNumber = 2;
-  } else if (randomNumber <= 46) {
+  } else if (randomNumber <= 0.46) {
     prizeNumber = 3;
+    // Летальный НС
   } else if (randomNumber <= 53) {
     prizeNumber = 4;
   } else if (randomNumber <= 70) {
+    // Легкий НС
     prizeNumber = 5;
-  } else if (randomNumber <= 85) {
+  } else if (randomNumber <= 0.85) {
+    // Групповой НС
     prizeNumber = 6;
   } else {
+    // Микротравма
     prizeNumber = 7;
   }
 

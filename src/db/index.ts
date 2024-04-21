@@ -101,6 +101,8 @@ await db.exec(`
       roll_id INTEGER,
       question_id INTEGER,
       is_active_player_question TEXT,
+      start_time number,
+      end_time number,
       status TEXT,
       FOREIGN KEY (game_id) REFERENCES games (id) ON UPDATE CASCADE ON DELETE CASCADE 
   );

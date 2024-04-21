@@ -1,6 +1,7 @@
 import GameController from '../../controllers/GameController.ts';
 import AnswerController from '../../controllers/AnswerController.ts';
 import { getActiveDefendsCount } from '../../utils/game.ts';
+import { MAX_BRIGADIER_DEFENDS_COUNT } from '../../constants/constants.ts';
 
 export default (io: any, socket: any) => {
   async function startAnswers() {
@@ -13,6 +14,35 @@ export default (io: any, socket: any) => {
       io.to(socket.roomId).emit('game:updateState', gameState);
     } catch (e) {
       socket.emit('notification', { status: 'error', message: 'Create Answers error' });
+    }
+  }
+
+  async function startBrigadierAnswers() {
+    try {
+      const questionsCount = await GameController.getBrigadierQuestionsCount(socket.roomId);
+      if (questionsCount > 0) {
+        await GameController.updateBrigadierQuestionsCount(questionsCount - 1, socket.roomId);
+        await AnswerController.updateExpiredAnswerStatus('error', socket.roomId);
+        const result = await AnswerController.createBrigadierAnswers(socket.roomId);
+        if (!result) throw new Error('createBrigadierAnswers error');
+        const gameState = await GameController.getState(socket.roomId);
+        io.to(socket.roomId).emit('game:updateState', gameState);
+      }
+    } catch (e) {
+      socket.emit('notification', { status: 'error', message: 'createBrigadierAnswers error' });
+    }
+  }
+
+  async function stopBrigadierAnswers() {
+    try {
+      const result = await AnswerController.updateExpiredAnswerStatus('error', socket.roomId);
+      if (!result) throw new Error('updateExpiredBrigadierAnswerStatus error');
+      await GameController.updateBrigadierStage('finished', socket.roomId);
+      const gameState = await GameController.getState(socket.roomId);
+      io.to(socket.roomId).emit('game:updateState', gameState);
+      io.to(socket.roomId).emit('game:stopBrigadierAnswers', gameState);
+    } catch (e) {
+      socket.emit('notification', { status: 'error', message: 'updateExpiredBrigadierAnswerStatus error' });
     }
   }
 
@@ -43,7 +73,6 @@ export default (io: any, socket: any) => {
       const answer = gameState.state?.answers.find((a) => a.id === data.answerId);
 
       if (answer.is_countable === 'false') {
-        console.log('ANSW', answer);
         // const timerId = setTimeout(async () => {
         //   await AnswerController.updateExpiredAnswerStatus('error', socket.roomId);
         //   const gameState = await GameController.getState(socket.roomId);
@@ -138,7 +167,8 @@ export default (io: any, socket: any) => {
         }
 
         const gameState = await GameController.getState(socket.roomId);
-        socket.emit('game:updateState', gameState);
+        //socket.emit('game:updateState', gameState);
+        io.to(socket.roomId).emit('game:updateState', gameState);
         io.to(socket.roomId).emit('answer:startTimer');
       } else {
         const gameState = await GameController.getState(socket.roomId);
@@ -149,7 +179,31 @@ export default (io: any, socket: any) => {
     }
   }
 
+  async function updateBrigadierAnswer(data: any) {
+    try {
+      const result = await AnswerController.updateAnswerStatus(data.status, data.answerId);
+
+      if (!result) throw new Error('Update Answers error');
+      let gameState = await GameController.getState(socket.roomId);
+      const answer = gameState.state?.answers.find((a) => a.id === data.answerId);
+      const playerState = await GameController.getPlayerState(socket.roomId, answer.player_id);
+      if (data.status === 'success') {
+        const oldPlayerDefendsCount = playerState.brigadier_defends_count;
+        if (oldPlayerDefendsCount < MAX_BRIGADIER_DEFENDS_COUNT) {
+          await GameController.updatePlayerBrigadierDefendsCount(answer.player_id, socket.roomId, oldPlayerDefendsCount + 1);
+        }
+      }
+      gameState = await GameController.getState(socket.roomId);
+      io.to(socket.roomId).emit('game:updateState', gameState);
+    } catch (e) {
+      socket.emit('notification', { status: 'error', message: 'Create Answers error' });
+    }
+  }
+
   socket.on('game:start_answers', startAnswers);
+  socket.on('answers:start_brigadier_answers', startBrigadierAnswers);
   socket.on('game:stop_answers', stopAnswers);
+  socket.on('answers:stop_brigadier_answers', stopBrigadierAnswers);
   socket.on('game:update_answer', updateAnswer);
+  socket.on('answers:update_brigadier_answer', updateBrigadierAnswer);
 };

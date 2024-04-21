@@ -36,6 +36,9 @@ await db.exec(`
       start_date TEXT,
       end_date TEXT,
       moderator_mode TEXT,
+      brigadier_mode TEXT,
+      brigadier_stage TEXT,
+      brigadier_questions_count INTEGER,
       answers_mode TEXT,
       shift_change_mode TEXT,
       show_roll_result_mode TEXT
@@ -97,7 +100,7 @@ await db.exec(`
       player_id INTEGER,
       roll_id INTEGER,
       question_id INTEGER,
-      is_countable TEXT,
+      is_active_player_question TEXT,
       status TEXT,
       FOREIGN KEY (game_id) REFERENCES games (id) ON UPDATE CASCADE ON DELETE CASCADE 
   );
@@ -123,6 +126,8 @@ await db.exec(`
       questions_without_def_count INTEGER,  
       questions_to_next_worker_count INTEGER,  
       no_more_rolls TEXT,  
+      brigadier_defends_count INTEGER,  
+      ready_to_start_brigadier_answers TEXT,  
       FOREIGN KEY (game_id) REFERENCES games (id) ON UPDATE CASCADE ON DELETE CASCADE, 
       FOREIGN KEY (player_id) REFERENCES players (id) ON UPDATE CASCADE ON DELETE CASCADE 
   );

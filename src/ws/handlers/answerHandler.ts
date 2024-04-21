@@ -72,7 +72,7 @@ export default (io: any, socket: any) => {
 
       const answer = gameState.state?.answers.find((a) => a.id === data.answerId);
 
-      if (answer.is_countable === 'false') {
+      if (answer.is_active_player_question === 'false') {
         // const timerId = setTimeout(async () => {
         //   await AnswerController.updateExpiredAnswerStatus('error', socket.roomId);
         //   const gameState = await GameController.getState(socket.roomId);
@@ -167,7 +167,7 @@ export default (io: any, socket: any) => {
         }
 
         const gameState = await GameController.getState(socket.roomId);
-        //socket.emit('game:updateState', gameState);
+        // socket.emit('game:updateState', gameState);
         io.to(socket.roomId).emit('game:updateState', gameState);
         io.to(socket.roomId).emit('answer:startTimer');
       } else {

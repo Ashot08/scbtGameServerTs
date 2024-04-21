@@ -100,7 +100,7 @@ await db.exec(`
       player_id INTEGER,
       roll_id INTEGER,
       question_id INTEGER,
-      is_countable TEXT,
+      is_active_player_question TEXT,
       status TEXT,
       FOREIGN KEY (game_id) REFERENCES games (id) ON UPDATE CASCADE ON DELETE CASCADE 
   );

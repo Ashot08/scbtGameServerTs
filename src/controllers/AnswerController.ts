@@ -24,7 +24,7 @@ class AnswerController {
       let result = null;
 
       for (const player of players) {
-        const isCountable: 'true' | 'false' = (player.id === lastTurn.player_id) ? 'false' : 'true';
+        const isActivePlayerQuestion: 'true' | 'false' = (player.id === lastTurn.player_id) ? 'false' : 'true';
 
         // eslint-disable-next-line no-await-in-loop
         result = await Answer.create({
@@ -33,7 +33,7 @@ class AnswerController {
           playerId: player.id,
           rollId: lastRoll.id,
           questionId: questionNumber,
-          isCountable,
+          isActivePlayerQuestion,
           status: 'in_process',
         });
       }
@@ -63,7 +63,7 @@ class AnswerController {
       let result = null;
 
       for (const player of players) {
-        const isCountable: 'true' | 'false' = 'false';
+        const isActivePlayerQuestion: 'true' | 'false' = 'false';
 
         // eslint-disable-next-line no-await-in-loop
         result = await Answer.create({
@@ -72,7 +72,7 @@ class AnswerController {
           playerId: player.id,
           rollId: 0,
           questionId: questionNumber,
-          isCountable,
+          isActivePlayerQuestion,
           status: 'in_process',
         });
       }

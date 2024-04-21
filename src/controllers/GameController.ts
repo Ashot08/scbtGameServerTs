@@ -14,6 +14,7 @@ import {
   getNewWorkersPositionsScheme, getNextWorkerIndex, getNotActiveDefendsCount,
   getWorkersOnPositionsCount, getWorkersPositionsFirstIndex,
 } from '../utils/game.ts';
+import { BRIGADIER_QUESTIONS_COUNT, MAX_WORKER_DEFENDS_COUNT } from '../constants/constants.ts';
 
 export type UpdateWorkerData = {
   userId: number,
@@ -46,6 +47,8 @@ class GameController {
         shiftChangeMode: 'true',
         showRollResultMode: 'false',
         creationDate: new Date().toJSON(),
+        brigadierStage: 'ready',
+        brigadierQuestionsCount: BRIGADIER_QUESTIONS_COUNT,
       };
 
       const result: RunResult = await Game.create(game);
@@ -216,6 +219,18 @@ class GameController {
     }
   }
 
+  async updateBrigadierStage(stage: 'ready' | 'in_process' | 'finished', gameId: number) {
+    try {
+      const result = await Game.updateBrigadierStage(stage, gameId);
+      if (result.changes) {
+        return { status: 'success', message: 'game BrigadierStage обновлен' };
+      }
+      return { status: 'error', message: 'Ошибка при обновлении game BrigadierStage' };
+    } catch (e) {
+      return { status: 'error', message: 'Ошибка при обновлении game BrigadierStage' };
+    }
+  }
+
   async createRoll(gameId: number) {
     try {
       const turns = await Game.getTurns(gameId);
@@ -326,6 +341,15 @@ class GameController {
     return playerState;
   }
 
+  async getBrigadierQuestionsCount(gameId: number) {
+    const count = await Game.getBrigadierQuestionsCount(gameId);
+    return count.brigadier_questions_count || 0;
+  }
+
+  async updateBrigadierQuestionsCount(count: number, gameId: number) {
+    return Game.updateBrigadierQuestionsCount(count, gameId);
+  }
+
   async updateWorkerData(gameId: number, data: UpdateWorkerData) {
     const userId = data.userId;
     const workerIndex = data.data.workerIndex;
@@ -392,6 +416,29 @@ class GameController {
     return { status: 'error', message: 'updatePlayerReadyStatus' };
   }
 
+  async updatePlayerReadyToStartBrigadier(gameId: number, data: ChangeReadyStatusData) {
+    const userId = data.userId;
+    const readyStatus = data.readyStatus ? 'true' : 'false';
+    const result = await Game.updatePlayerReadyToStartBrigadier(userId, gameId, readyStatus);
+
+    if (result.changes) {
+      return { status: 'success', message: 'updatePlayerReadyStatus' };
+    }
+    return { status: 'error', message: 'updatePlayerReadyStatus' };
+  }
+
+  async updatePlayerBrigadierDefendsCount(userId: number, gameId: number, newDefendsCount: number) {
+    try {
+      const result = await Game.updatePlayerBrigadierDefendsCount(userId, gameId, newDefendsCount);
+      if (result.changes) {
+        return { status: 'success', message: 'updatePlayerBrigadierDefendsCount' };
+      }
+      return { status: 'error', message: 'updatePlayerBrigadierDefendsCount' };
+    } catch (e) {
+      return { status: 'error', message: 'updatePlayerBrigadierDefendsCount' };
+    }
+  }
+
   async updateShiftChangeMode(gameId: number, shiftChangeMode: 'true' | 'false') {
     if (shiftChangeMode !== 'true' && shiftChangeMode !== 'false') {
       return { status: 'error', message: 'shiftChangeMode incorrect data' };
@@ -449,31 +496,20 @@ class GameController {
     await Game.updateAccidentDiff(playerState.player_id, gameId, 0);
     await Game.updateQuestionsToActivateDef(playerState.player_id, gameId, 0);
     await Game.updateQuestionsWithoutDef(playerState.player_id, gameId, 0);
-    // await Game.updatePlayerDefends(playerState.player_id, gameId, playerState.defends + 1);
-    const notActiveDefendsCount = getNotActiveDefendsCount(playerState, playerState.active_worker);
-    const activeDefendsCount = getActiveDefendsCount(playerState, playerState.active_worker);
-    const totalDefendsCount = notActiveDefendsCount + activeDefendsCount;
 
-    if((notActiveDefendsCount > 0) && (totalDefendsCount >= 6)) {
-      await this.updateNotActiveDefends(
-        gameId, playerState, -1,
-      );
-    }
-    await this.updateActiveDefends(
-      gameId, playerState, 1,
-    );
-
-    // Переход к следующему рабочему
-    // let activeWorkerIndex = playerState.active_worker;
-    // let nextWorker = getNextWorkerIndex(playerState, activeWorkerIndex);
-    // if(!nextWorker || (nextWorker < activeWorkerIndex)) {
-    //   await Game.updateNoMoreRolls(playerState.player_id, gameId, 'true');
-    // } else {
-    //   await Game.updatePlayerActiveWorker(playerState.player_id, gameId, nextWorker);
-    //   nextWorker = getNextWorkerIndex(playerState, nextWorker);
-    //   await Game.updatePlayerNextWorkerIndex(playerState.player_id, gameId, nextWorker);
+    // const notActiveDefendsCount = getNotActiveDefendsCount(playerState, playerState.active_worker);
+    // const activeDefendsCount = getActiveDefendsCount(playerState, playerState.active_worker);
+    // const totalDefendsCount = notActiveDefendsCount + activeDefendsCount;
+    // if((notActiveDefendsCount > 0) && (totalDefendsCount >= 6)) {
+    //   await this.updateNotActiveDefends(
+    //     gameId, playerState, -1,
+    //   );
     // }
+    // await this.updateActiveDefends(
+    //   gameId, playerState, 1,
+    // );
 
+    await this.addActiveDefend(gameId, playerState, playerState.active_worker);
     return {status: 'success', message: 'onRollBonus'};
   }
 
@@ -558,6 +594,32 @@ class GameController {
       playerState,
       playerState.active_worker,
       addingCount,
+    );
+    await Game.updateWorkerActiveDefends(playerState.player_id, gameId, activeDefendsScheme);
+  }
+
+  async addActiveDefend(gameId: number, playerState: any, workerIndex: number){
+
+    const activeDefendsCount = getActiveDefendsCount(playerState, workerIndex);
+    const notActiveDefendsCount = getNotActiveDefendsCount(playerState, workerIndex);
+
+    if(activeDefendsCount >= MAX_WORKER_DEFENDS_COUNT){
+      return;
+    }
+
+    if((activeDefendsCount + notActiveDefendsCount) >= MAX_WORKER_DEFENDS_COUNT){
+      const notActiveDefendsScheme = getNewNotActiveDefendsScheme(
+        playerState,
+        workerIndex,
+        -1,
+      );
+      await Game.updateWorkerNotActiveDefends(playerState.player_id, gameId, notActiveDefendsScheme);
+    }
+
+    const activeDefendsScheme = getNewActiveDefendsScheme(
+      playerState,
+      workerIndex,
+      1,
     );
     await Game.updateWorkerActiveDefends(playerState.player_id, gameId, activeDefendsScheme);
   }

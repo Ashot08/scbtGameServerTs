@@ -1,0 +1,3 @@
+export const MAX_WORKER_DEFENDS_COUNT = 6;
+export const BRIGADIER_QUESTIONS_COUNT = 3;
+export const MAX_BRIGADIER_DEFENDS_COUNT = 3;

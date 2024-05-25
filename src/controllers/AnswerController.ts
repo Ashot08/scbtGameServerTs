@@ -6,6 +6,7 @@ import Question from '../db/models/Question.ts';
 class AnswerController {
   async createAnswers(gameId: number) {
     try {
+      console.log('start creating');
       const turns = await Game.getTurns(gameId);
       const players = await Game.getPlayersByGameId({ id: gameId });
       const answers = await Answer.getAnswers(gameId);
@@ -19,8 +20,9 @@ class AnswerController {
       }
       const lastRoll = rolls.slice(-1)[0];
       const gameQuestionCats = await Question.getQuestionCatsByGameId(gameId);
+      console.log('start');
       const questionNumber = getQuestionNumber(answers, gameQuestionCats);
-
+      console.log('end');
       let result = null;
 
       for (const player of players) {

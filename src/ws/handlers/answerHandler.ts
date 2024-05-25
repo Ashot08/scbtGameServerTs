@@ -14,6 +14,7 @@ export default (io: any, socket: any) => {
       await GameController.updateAnswersMode('true', socket.roomId);
       const gameState = await GameController.getState(socket.roomId);
       io.to(socket.roomId).emit('game:updateState', gameState);
+      console.log('STARTED ANSWERS');
     } catch (e) {
       socket.emit('notification', { status: 'error', message: 'Create Answers error' });
     }

@@ -16,6 +16,12 @@ export interface ReadOptions {
   id?: number,
 }
 
+export enum UserType {
+  Base = 'base',
+  Company = 'company',
+  Admin = 'admin',
+}
+
 export interface LogInData {
   username: string;
   password: string;
@@ -26,8 +32,8 @@ class User extends BaseModel {
       name, username, email, password,
     } = data;
     return db.run(
-      'INSERT INTO users (name, username, email, password) VALUES (?, ?, ?, ?)',
-      [name, username, email, password],
+      'INSERT INTO users (name, username, email, password, type) VALUES (?, ?, ?, ?, ?)',
+      [name, username, email, password, UserType.Base],
     );
   }
 

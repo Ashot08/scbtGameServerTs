@@ -22,6 +22,7 @@ await db.exec(`
       name TEXT,
       email TEXT,
       password TEXT
+      type TEXT
   );
 `);
 

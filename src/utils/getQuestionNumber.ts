@@ -12,8 +12,6 @@ export const getQuestionNumber = (answers: any, gameQuestionCats: QuestionCatOpt
     }
   }
 
-
-
   // Фильтруем
   if (Array.isArray(allQuestions)) {
     const hasCats = Array.isArray(gameQuestionCats) && gameQuestionCats.length;

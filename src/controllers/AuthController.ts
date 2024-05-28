@@ -4,11 +4,12 @@ import { validationResult } from 'express-validator';
 import bcrypt from 'bcrypt';
 import RunResult = ISqlite.RunResult;
 import config from '../../config.ts';
-import User from '../db/models/User.ts';
+import User, { UserType } from '../db/models/User.ts';
 
-function generateAccessToken(id: number) {
+function generateAccessToken(id: number, type: string) {
   const payload = {
     id,
+    type,
   };
   return jwt.sign(payload, config.secret, { expiresIn: '24h' });
 }
@@ -27,7 +28,7 @@ class AuthController {
         return res.status(400).json({ message: 'Ошибка в имени пользователя или пароле' });
       }
 
-      const token = generateAccessToken(user.id);
+      const token = generateAccessToken(user.id, user.type);
       return res.json({
         message: 'Пользователь успешно залогинен',
         token,
@@ -59,12 +60,12 @@ class AuthController {
       }
 
       const hashPassword = bcrypt.hashSync(password, 5);
-      const user = { ...req.body, password: hashPassword };
+      const user = { ...req.body, password: hashPassword, type: UserType.Base };
 
       const result: RunResult = await User.create(user);
 
       if (result.lastID) {
-        const token = generateAccessToken(result.lastID);
+        const token = generateAccessToken(result.lastID, UserType.Base);
         return res.json({ message: 'Пользователь успешно зарегистрирован', result, token });
       }
     } catch (e) {

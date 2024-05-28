@@ -6,6 +6,7 @@ import Question from '../db/models/Question.ts';
 class AnswerController {
   async createAnswers(gameId: number) {
     try {
+      console.log('start creating');
       const turns = await Game.getTurns(gameId);
       const players = await Game.getPlayersByGameId({ id: gameId });
       const answers = await Answer.getAnswers(gameId);
@@ -19,12 +20,13 @@ class AnswerController {
       }
       const lastRoll = rolls.slice(-1)[0];
       const gameQuestionCats = await Question.getQuestionCatsByGameId(gameId);
+      console.log('start');
       const questionNumber = getQuestionNumber(answers, gameQuestionCats);
-
+      console.log('end');
       let result = null;
 
       for (const player of players) {
-        const isActivePlayerQuestion: 'true' | 'false' = (player.id === lastTurn.player_id) ? 'false' : 'true';
+        const isActivePlayerQuestion: 'true' | 'false' = (player.id === lastTurn.player_id) ? 'true' : 'false';
 
         // eslint-disable-next-line no-await-in-loop
         result = await Answer.create({
@@ -35,6 +37,8 @@ class AnswerController {
           questionId: questionNumber,
           isActivePlayerQuestion,
           status: 'in_process',
+          startTime: Date.now(),
+          endTime: 0,
         });
       }
       if (result?.lastID) {
@@ -63,7 +67,7 @@ class AnswerController {
       let result = null;
 
       for (const player of players) {
-        const isActivePlayerQuestion: 'true' | 'false' = 'false';
+        const isActivePlayerQuestion: 'true' | 'false' = 'true';
 
         // eslint-disable-next-line no-await-in-loop
         result = await Answer.create({
@@ -74,6 +78,8 @@ class AnswerController {
           questionId: questionNumber,
           isActivePlayerQuestion,
           status: 'in_process',
+          startTime: Date.now(),
+          endTime: 0,
         });
       }
       if (result?.lastID) {
@@ -101,6 +107,18 @@ class AnswerController {
     }
   }
 
+  async updateAnswerEndTime(endTime: number, answerId: number) {
+    try {
+      const result = await Answer.updateAnswerEndTime(endTime, answerId);
+      if (result.changes) {
+        return { status: 'success', message: 'success updateAnswerEndTime' };
+      }
+      return { status: 'error', message: 'Ошибка при updateAnswerEndTime' };
+    } catch (e) {
+      return { status: 'error', message: 'Ошибка при updateAnswerEndTime' };
+    }
+  }
+
   async updateExpiredAnswerStatus(status: 'success' | 'error', gameId: number) {
     try {
       const result = await Answer.updateExpiredAnswerStatus(status, gameId);
@@ -111,6 +129,19 @@ class AnswerController {
       return { status: 'error', message: 'Ошибка при обновлении ExpiredAnswerStatus' };
     } catch (e) {
       return { status: 'error', message: 'Ошибка при обновлении ExpiredAnswerStatus' };
+    }
+  }
+
+  async updateExpiredAnswerEndTime(gameId: number) {
+    try {
+      const result = await Answer.updateExpiredAnswerEndTime(gameId);
+
+      if (result) {
+        return { status: 'success', message: 'Успех при обновлении ExpiredAnswerEndTime' };
+      }
+      return { status: 'error', message: 'Ошибка при обновлении ExpiredAnswerEndTime' };
+    } catch (e) {
+      return { status: 'error', message: 'Ошибка при обновлении ExpiredAnswerEndTime' };
     }
   }
 }

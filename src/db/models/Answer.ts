@@ -15,6 +15,8 @@ export interface AnswerOptions {
   questionId: number,
   isActivePlayerQuestion: 'true' | 'false',
   status: 'error' | 'success' | 'in_process',
+  startTime: number,
+  endTime: number,
 }
 class Answer extends BaseModel {
   async read(options: AnswerReadOptions) {
@@ -35,13 +37,15 @@ class Answer extends BaseModel {
       questionId,
       isActivePlayerQuestion,
       status,
+      startTime,
+      endTime,
     } = options;
     return db.run(
       `INSERT INTO 
-            answers (turn_id, game_id, player_id, roll_id, question_id, is_active_player_question, status) 
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            answers (turn_id, game_id, player_id, roll_id, question_id, is_active_player_question, status, start_time, end_time) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
-      [turnId, gameId, playerId, rollId, questionId, isActivePlayerQuestion, status],
+      [turnId, gameId, playerId, rollId, questionId, isActivePlayerQuestion, status, startTime, endTime],
     );
   }
 
@@ -54,6 +58,17 @@ class Answer extends BaseModel {
     return db.run(`UPDATE answers SET status = ? 
         WHERE game_id = ? 
         AND status = 'in_process'`, status, gameId);
+  }
+
+  async updateExpiredAnswerEndTime(gameId: number) {
+    return db.run(`UPDATE answers SET end_time = ? 
+        WHERE game_id = ? 
+        AND status = 'in_process'`, Date.now(), gameId);
+  }
+
+  async updateAnswerEndTime(endTime: number, answerId: number) {
+    return db.run(`UPDATE answers SET end_time = ? 
+        WHERE id = ?`, endTime, answerId);
   }
 
   async getAnswers(gameId: number) {

@@ -1,4 +1,5 @@
 import express, { Response, Request } from 'express';
+import fileUpload from 'express-fileupload';
 import { createServer } from 'node:http';
 import { join } from 'node:path';
 import { Server } from 'socket.io';
@@ -11,6 +12,8 @@ import { gameRouter } from './routes/gameRouter.ts';
 import gameHandler from './ws/handlers/gameHandler.ts';
 import answerHandler from './ws/handlers/answerHandler.ts';
 import { questionRouter } from './routes/questionRouter.ts';
+import { fileUploadRouter } from './routes/fileUploadRouter.ts';
+
 // import answersString from './handleAnswers.ts';
 
 const app = express();
@@ -25,10 +28,14 @@ const io = new Server(server, {
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(fileUpload({
+  limits: { fileSize: 2 * 1024 * 1024 },
+}));
 
 app.use('/auth', authRouter);
 app.use('/game', gameRouter);
 app.use('/question', questionRouter);
+app.use('/file', fileUploadRouter);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);

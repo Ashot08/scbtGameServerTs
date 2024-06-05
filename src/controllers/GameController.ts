@@ -14,7 +14,12 @@ import {
   getNewWorkersPositionsScheme, getNextWorkerIndex, getNotActiveDefendsCount,
   getWorkersOnPositionsCount, getWorkersPositionsFirstIndex,
 } from '../utils/game.ts';
-import { BRIGADIER_QUESTIONS_COUNT, MAX_WORKER_DEFENDS_COUNT } from '../constants/constants.ts';
+import {
+  ANSWER_TIME_LONG,
+  ANSWER_TIME_SHORT,
+  BRIGADIER_QUESTIONS_COUNT,
+  MAX_WORKER_DEFENDS_COUNT,
+} from '../constants/constants.ts';
 
 export type UpdateWorkerData = {
   userId: number,
@@ -35,9 +40,14 @@ class GameController {
   async createGame(req: any, res: any) {
     try {
       const validationErrors = validationResult(req);
+      let answerTime = ANSWER_TIME_SHORT;
 
       if (!validationErrors.isEmpty()) {
         return res.status(400).json({ message: 'Ошибка при валидации данных', validationErrors });
+      }
+
+      if (req.body.quizMode === true) {
+        answerTime = ANSWER_TIME_LONG;
       }
 
       const game = {
@@ -49,6 +59,7 @@ class GameController {
         creationDate: new Date().toJSON(),
         brigadierStage: 'ready',
         brigadierQuestionsCount: BRIGADIER_QUESTIONS_COUNT,
+        answerTime,
       };
 
       const result: RunResult = await Game.create(game);

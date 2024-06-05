@@ -42,7 +42,8 @@ await db.exec(`
       brigadier_questions_count INTEGER,
       answers_mode TEXT,
       shift_change_mode TEXT,
-      show_roll_result_mode TEXT
+      show_roll_result_mode TEXT,
+      answer_time INTEGER
   );
 `);
 

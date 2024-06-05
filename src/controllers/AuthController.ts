@@ -42,6 +42,7 @@ class AuthController {
   }
 
   async signup(req: any, res: any) {
+    console.log(req.files);
     try {
       const validationErrors = validationResult(req);
 

@@ -17,6 +17,7 @@ export interface CreateGameData {
   brigadierMode: 'true' | 'false',
   brigadierStage: 'ready' | 'in_process' | 'finished',
   brigadierQuestionsCount: number,
+  answerTime: number,
 }
 export interface GameReadOptions {
   id?: number,
@@ -43,7 +44,9 @@ class Game extends BaseModel {
       brigadierMode,
       brigadierStage,
       brigadierQuestionsCount,
+      answerTime,
     } = data;
+
     return db.run(
       `INSERT INTO 
             games (
@@ -54,8 +57,9 @@ class Game extends BaseModel {
             creation_date, 
             moderator_mode, 
             answers_mode, 
-            shift_change_mode, show_roll_result_mode, brigadier_mode, brigadier_stage, brigadier_questions_count) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            shift_change_mode, 
+            show_roll_result_mode, brigadier_mode, brigadier_stage, brigadier_questions_count, answer_time) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
       [
         title,
@@ -64,7 +68,8 @@ class Game extends BaseModel {
         moderator,
         creationDate,
         moderatorMode,
-        answersMode, shiftChangeMode, showRollResultMode, brigadierMode, brigadierStage, brigadierQuestionsCount],
+        answersMode,
+        shiftChangeMode, showRollResultMode, brigadierMode, brigadierStage, brigadierQuestionsCount, answerTime],
     );
   }
 

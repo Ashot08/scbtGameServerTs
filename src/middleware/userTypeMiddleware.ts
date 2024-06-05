@@ -1,12 +1,12 @@
 import jwt from 'jsonwebtoken';
 import config from '../../config.ts';
+import { UserType } from '../db/models/User.ts';
 
 interface JwtPayload {
   type: string;
-
 }
 
-export const userTypeMiddleware = (accessedTypes: string[]) => async (req: any, res: any, next: any) => {
+export const userTypeMiddleware = (accessedTypes: UserType[]) => async (req: any, res: any, next: any) => {
   if (req.method === 'OPTIONS') {
     next();
   }
@@ -20,7 +20,7 @@ export const userTypeMiddleware = (accessedTypes: string[]) => async (req: any, 
     const { type } = jwt.verify(token, config.secret) as JwtPayload;
 
     let hasAccess = false;
-    if (accessedTypes.includes(type)) {
+    if (accessedTypes.includes(type as UserType)) {
       hasAccess = true;
     }
     if (!hasAccess) {

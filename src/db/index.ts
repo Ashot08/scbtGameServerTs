@@ -71,7 +71,10 @@ await db.exec(`
   CREATE TABLE IF NOT EXISTS questionCats (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       title TEXT,
-      slug TEXT UNIQUE
+      slug TEXT UNIQUE,
+      order_number INTEGER,
+      parent_id INTEGER,
+      FOREIGN KEY (parent_id) REFERENCES questionCats(id) ON DELETE SET NULL
   );
 `);
 
@@ -134,6 +137,35 @@ await db.exec(`
       ready_to_start_brigadier_answers TEXT,  
       FOREIGN KEY (game_id) REFERENCES games (id) ON UPDATE CASCADE ON DELETE CASCADE, 
       FOREIGN KEY (player_id) REFERENCES players (id) ON UPDATE CASCADE ON DELETE CASCADE 
+  );
+`);
+
+await db.exec(`
+  CREATE TABLE IF NOT EXISTS questions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      text TEXT,
+      difficulty INTEGER,
+      type INTEGER  
+  );
+`);
+
+await db.exec(`
+  CREATE TABLE IF NOT EXISTS variants (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      text TEXT,
+      correct TEXT,
+      question_id INTEGER ,
+      FOREIGN KEY (question_id) REFERENCES questions (id) ON UPDATE CASCADE ON DELETE CASCADE  
+  );
+`);
+
+await db.exec(`
+  CREATE TABLE IF NOT EXISTS questions_questionCats (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      question_id INTEGER ,
+      questionCat_id INTEGER ,
+      FOREIGN KEY (question_id) REFERENCES questions (id) ON UPDATE CASCADE ON DELETE CASCADE  
+      FOREIGN KEY (questionCat_id) REFERENCES questionCats (id) ON UPDATE CASCADE ON DELETE CASCADE  
   );
 `);
 

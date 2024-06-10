@@ -10,6 +10,19 @@ export interface QuestionCatOptions {
   title: string,
   slug: string,
 }
+
+export interface QuestionOptions {
+  text: string,
+  type: number,
+  difficulty: number,
+}
+
+export interface QuestionVariantOptions {
+  text: string,
+  correct: string,
+  questionId: number,
+}
+
 class Question extends BaseModel {
   async getQuestionCats() {
     return db.all(`SELECT * FROM questionCats 
@@ -66,7 +79,34 @@ class Question extends BaseModel {
     );
   }
 
-  create = undefined;
+  async create(data: QuestionOptions) {
+    const { text, difficulty, type } = data;
+    return db.run(
+      `INSERT INTO questions 
+            (text, difficulty, type) 
+            VALUES (?, ?, ?)`,
+      [text, difficulty, type],
+    );
+  }
+
+  async createVariant(data: QuestionVariantOptions) {
+    const { text, correct, questionId } = data;
+    return db.run(
+      `INSERT INTO variants 
+            (text, correct, question_id) 
+            VALUES (?, ?, ?)`,
+      [text, correct, questionId],
+    );
+  }
+
+  async addCatToQuestion(catId: number, questionId: number) {
+    return db.run(
+      `INSERT INTO questions_questionCats 
+            (questionCat_id, question_id) 
+            VALUES (?, ?)`,
+      [catId, questionId],
+    );
+  }
 
   read = undefined;
 

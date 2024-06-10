@@ -87,6 +87,36 @@ class QuestionController {
       return res.status(400).json({ message: 'Get Cats error' });
     }
   }
+
+  async createQuestion(req: any, res: any) {
+    const validationErrors = validationResult(req);
+
+    if (!validationErrors.isEmpty()) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Ошибка при валидации данных',
+        validationErrors,
+      });
+    }
+
+    try {
+      const question = { ...req.body };
+
+      const createQuestionResult = await Question.create({
+        text: question.text,
+        type: question.type,
+        difficulty: question.difficulty,
+      });
+      if (!createQuestionResult.lastID) {
+        return res.status(400).json({ message: 'Create Question error, question not created' });
+      }
+
+      return res.json({ message: 'Success Get Cats', questionId: createQuestionResult.lastID });
+    } catch (e: any) {
+      console.log(e.message);
+      return res.status(400).json({ message: 'Create Question error' });
+    }
+  }
 }
 
 export default new QuestionController();

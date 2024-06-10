@@ -2,6 +2,8 @@ import express from 'express';
 import { check } from 'express-validator';
 import AuthMiddleware from '../middleware/authMiddleware.ts';
 import QuestionController from '../controllers/QuestionController.ts';
+import { userTypeMiddleware } from '../middleware/userTypeMiddleware.ts';
+import { UserType } from '../db/models/User.ts';
 
 export const questionRouter = express.Router();
 
@@ -13,6 +15,12 @@ questionRouter.post('/create_cat', [
 questionRouter.post('/delete_cats', [
   check('catsIds', 'Категории не может быть пустым').notEmpty(),
 ], AuthMiddleware, QuestionController.deleteQuestionCats);
+
+questionRouter.post('/create_question', [
+  check('text', 'Текст вопроса не может быть пустым').notEmpty(),
+  check('type', 'Тип вопроса не может быть пустым').notEmpty(),
+  check('difficulty', 'Сложность вопроса не может быть пустым').notEmpty(),
+], AuthMiddleware, userTypeMiddleware([UserType.Admin]), QuestionController.createQuestion);
 
 // questionRouter.get('/games/:playerId', AuthMiddleware, GameController.getGamesByPlayerId);
 questionRouter.get('/cats', AuthMiddleware, QuestionController.getQuestionCats);

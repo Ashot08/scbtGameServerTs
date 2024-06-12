@@ -108,6 +108,17 @@ class Question extends BaseModel {
     );
   }
 
+  async getQuestions(limit = 5, offset = 0, filters: any) {
+    console.log(filters);
+    return db.all(
+      `SELECT * 
+        FROM questions
+        ORDER BY id ASC
+        LIMIT ? OFFSET ?`,
+      [limit, offset]
+    );
+  }
+
   read = undefined;
 
   update = undefined;

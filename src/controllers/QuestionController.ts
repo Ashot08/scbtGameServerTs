@@ -101,7 +101,8 @@ class QuestionController {
 
     try {
       const question = { ...req.body };
-
+      // console.log(question);
+      // return res.json({ message: 'Success Get Cats', question: question });
       const createQuestionResult = await Question.create({
         text: question.text,
         type: question.type,
@@ -110,11 +111,41 @@ class QuestionController {
       if (!createQuestionResult.lastID) {
         return res.status(400).json({ message: 'Create Question error, question not created' });
       }
-
-      return res.json({ message: 'Success Get Cats', questionId: createQuestionResult.lastID });
+      if(Array.isArray(question.cats)) {
+        for (const cat of question.cats) {
+          await Question.addCatToQuestion(cat, createQuestionResult.lastID);
+        }
+      }
+      if(Array.isArray(question.variants)) {
+        for (const variant of question.variants) {
+          await Question.createVariant({
+            text: variant.text,
+            correct: variant.correct,
+            questionId: createQuestionResult.lastID
+          });
+        }
+      }
+      return res.json({ message: 'Success Create Question', questionId: createQuestionResult.lastID });
     } catch (e: any) {
-      console.log(e.message);
       return res.status(400).json({ message: 'Create Question error' });
+    }
+  }
+
+  async getQuestions(req: any, res: any) {
+    const validationErrors = validationResult(req);
+    if (!validationErrors.isEmpty()) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Ошибка при валидации данных',
+        validationErrors,
+      });
+    }
+    try {
+      const {limit, offset, filters} = req.query;
+      const questions = await Question.getQuestions(limit, offset, filters);
+      return res.json({ message: 'Success Get Questions', questions });
+    } catch (e: any) {
+      return res.status(400).json({ message: 'Get Questions error' });
     }
   }
 }

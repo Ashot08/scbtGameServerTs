@@ -22,6 +22,12 @@ questionRouter.post('/create_question', [
   check('difficulty', 'Сложность вопроса не может быть пустым').notEmpty(),
 ], AuthMiddleware, userTypeMiddleware([UserType.Admin]), QuestionController.createQuestion);
 
+questionRouter.get('/questions', [
+  // check('count', 'Количество не может быть пустым').notEmpty(),
+  // check('offset', 'Отступ не может быть пустым').notEmpty(),
+  // check('filters', 'Фильтр не может быть пустым').notEmpty(),
+], AuthMiddleware, userTypeMiddleware([UserType.Admin]), QuestionController.getQuestions);
+
 // questionRouter.get('/games/:playerId', AuthMiddleware, GameController.getGamesByPlayerId);
 questionRouter.get('/cats', AuthMiddleware, QuestionController.getQuestionCats);
 questionRouter.get('/cats/:gameId', AuthMiddleware, QuestionController.getQuestionCatsByGameId);

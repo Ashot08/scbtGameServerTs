@@ -111,17 +111,19 @@ class QuestionController {
       if (!createQuestionResult.lastID) {
         return res.status(400).json({ message: 'Create Question error, question not created' });
       }
-      if(Array.isArray(question.cats)) {
+      if (Array.isArray(question.cats)) {
         for (const cat of question.cats) {
+          // eslint-disable-next-line no-await-in-loop
           await Question.addCatToQuestion(cat, createQuestionResult.lastID);
         }
       }
-      if(Array.isArray(question.variants)) {
+      if (Array.isArray(question.variants)) {
         for (const variant of question.variants) {
+          // eslint-disable-next-line no-await-in-loop
           await Question.createVariant({
             text: variant.text,
             correct: variant.correct,
-            questionId: createQuestionResult.lastID
+            questionId: createQuestionResult.lastID,
           });
         }
       }
@@ -141,10 +143,19 @@ class QuestionController {
       });
     }
     try {
-      const {limit, offset, filters} = req.query;
-      const questions = await Question.getQuestions(limit, offset, filters);
-      return res.json({ message: 'Success Get Questions', questions });
+      const { limit, offset, filters } = req.query;
+      let count = 0;
+      let questions = [];
+      const countResult = await Question.getQuestionsCount(filters);
+      if(countResult.count) {
+        count = countResult.count;
+      }
+      if(count > 0) {
+        questions = await Question.getQuestions(limit, offset, filters);
+      }
+      return res.json({ message: 'Success Get Questions', questions, count });
     } catch (e: any) {
+      console.log(e);
       return res.status(400).json({ message: 'Get Questions error' });
     }
   }

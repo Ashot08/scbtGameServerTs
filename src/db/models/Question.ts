@@ -111,11 +111,19 @@ class Question extends BaseModel {
   async getQuestions(limit = 5, offset = 0, filters: any) {
     console.log(filters);
     return db.all(
-      `SELECT * 
+      `SELECT *
         FROM questions
-        ORDER BY id ASC
+        ORDER BY id DESC
         LIMIT ? OFFSET ?`,
-      [limit, offset]
+      [limit, offset],
+    );
+  }
+
+  async getQuestionsCount(filters: any) {
+    console.log(filters);
+    return db.get(
+      `SELECT COUNT(*) as count
+        FROM questions`,
     );
   }
 

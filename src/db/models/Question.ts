@@ -127,6 +127,34 @@ class Question extends BaseModel {
     );
   }
 
+  async getQuestionById(id: number) {
+    return db.get(
+      `SELECT *
+        FROM questions
+        WHERE id = ?`,
+      [id],
+    );
+  }
+
+  async getQuestionCatsByQuestionId(questionId: number) {
+    return db.all(
+      `SELECT c.id, c.title, c.slug
+        FROM questions_questionCats as qc
+        JOIN questionCats as c ON c.id = qc.questionCat_id
+        WHERE qc.question_id = ? ORDER BY c.id ASC`,
+      questionId,
+    );
+  }
+
+  async getQuestionVariantsByQuestionId(questionId: number) {
+    return db.all(
+      `SELECT *
+        FROM variants 
+        WHERE question_id = ? ORDER BY id ASC`,
+      questionId,
+    );
+  }
+
   read = undefined;
 
   update = undefined;

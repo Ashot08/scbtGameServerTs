@@ -28,6 +28,11 @@ questionRouter.get('/questions', [
   // check('filters', 'Фильтр не может быть пустым').notEmpty(),
 ], AuthMiddleware, userTypeMiddleware([UserType.Admin]), QuestionController.getQuestions);
 
+questionRouter.get('/question', [
+  check('id', 'Id не может быть пустым').notEmpty(),
+  check('id', 'Id должно быть числом').isNumeric(),
+], AuthMiddleware, userTypeMiddleware([UserType.Admin]), QuestionController.getQuestionById);
+
 // questionRouter.get('/games/:playerId', AuthMiddleware, GameController.getGamesByPlayerId);
 questionRouter.get('/cats', AuthMiddleware, QuestionController.getQuestionCats);
 questionRouter.get('/cats/:gameId', AuthMiddleware, QuestionController.getQuestionCatsByGameId);

@@ -147,16 +147,46 @@ class QuestionController {
       let count = 0;
       let questions = [];
       const countResult = await Question.getQuestionsCount(filters);
-      if(countResult.count) {
+      if (countResult.count) {
         count = countResult.count;
       }
-      if(count > 0) {
+      if (count > 0) {
         questions = await Question.getQuestions(limit, offset, filters);
       }
       return res.json({ message: 'Success Get Questions', questions, count });
     } catch (e: any) {
       console.log(e);
       return res.status(400).json({ message: 'Get Questions error' });
+    }
+  }
+  async getQuestionById(req: any, res: any) {
+    const validationErrors = validationResult(req);
+    if (!validationErrors.isEmpty()) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Ошибка при валидации данных',
+        validationErrors,
+      });
+    }
+    try {
+      const { id } = req.query;
+      const questionResult = await Question.getQuestionById(id);
+      if(questionResult) {
+        const catsResult = await Question.getQuestionCatsByQuestionId(id);
+        if(Array.isArray(catsResult)) {
+          questionResult.cats = catsResult;
+        }
+
+        const variantsResult = await Question.getQuestionVariantsByQuestionId(id);
+        if(Array.isArray(variantsResult)) {
+          questionResult.variants = variantsResult;
+        }
+        return res.json({ message: 'Success Get QuestionById', questionResult });
+      }
+      return res.status(400).json({ message: 'Get Question error' });
+    } catch (e: any) {
+      console.log(e);
+      return res.status(400).json({ message: 'Get Question By Id error' });
     }
   }
 }

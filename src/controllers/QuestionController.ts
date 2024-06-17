@@ -149,10 +149,10 @@ class QuestionController {
 
       await Question.removeAllCatsFromQuestion(question.id);
       await Question.removeAllVariantsByQuestionId(question.id);
-      if(typeof question.id !== 'number') {
+      if (typeof question.id !== 'number') {
         return res.status(400).json({ message: 'Update Question error, question not created' });
       }
-      const updateQuestionResult = await Question.update(question.id,{
+      const updateQuestionResult = await Question.update(question.id, {
         text: question.text,
         type: question.type,
         difficulty: question.difficulty,
@@ -192,9 +192,23 @@ class QuestionController {
       });
     }
     try {
-      const { limit, offset, filters } = req.query;
+      const { limit, offset, text, cats } = req.query;
       let count = 0;
       let questions = [];
+      let filters = '';
+
+      if(text) {
+        filters = `text LIKE '%${text}%' `;
+      }
+
+      if(cats) {
+        if(filters) {
+          filters += `AND id IN (SELECT question_id as id FROM questions_questionCats WHERE questionCat_id IN (${cats}))`;
+        } else {
+          filters += `id IN (SELECT question_id as id FROM questions_questionCats WHERE questionCat_id IN (${cats}))`;
+        }
+      }
+
       const countResult = await Question.getQuestionsCount(filters);
       if (countResult.count) {
         count = countResult.count;
@@ -204,7 +218,6 @@ class QuestionController {
       }
       return res.json({ message: 'Success Get Questions', questions, count });
     } catch (e: any) {
-      console.log(e);
       return res.status(400).json({ message: 'Get Questions error' });
     }
   }
@@ -235,8 +248,33 @@ class QuestionController {
       }
       return res.status(400).json({ message: 'Get Question error' });
     } catch (e: any) {
-      console.log(e);
       return res.status(400).json({ message: 'Get Question By Id error' });
+    }
+  }
+
+  async deleteQuestionsByIds(req: any, res: any) {
+    const validationErrors = validationResult(req);
+    if (!validationErrors.isEmpty()) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Ошибка при валидации данных',
+        validationErrors,
+      });
+    }
+    try {
+      const { ids } = req.body;
+      if (Array.isArray(ids)) {
+        for (const id of ids) {
+          if (typeof id === 'number') {
+            // eslint-disable-next-line no-await-in-loop
+            await Question.delete(id);
+          }
+        }
+        return res.json({ message: 'Success Get QuestionById' });
+      }
+      return res.status(400).json({ message: 'Delete Question error' });
+    } catch (e: any) {
+      return res.status(400).json({ message: 'Delete Question By Id error' });
     }
   }
 }

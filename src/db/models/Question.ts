@@ -138,7 +138,19 @@ class Question extends BaseModel {
   }
 
   async getQuestions(limit = 5, offset = 0, filters: any) {
-    console.log(filters);
+    if (filters) {
+      const query = `SELECT *
+        FROM questions
+        WHERE ${filters}
+        ORDER BY id DESC
+        LIMIT ${limit} OFFSET ${offset}`;
+      console.log(query);
+      // const query = `SELECT *
+      //   FROM questions
+      //   WHERE text LIKE '%%' AND id IN (SELECT question_id as id FROM questions_questionCats WHERE questionCat_id IN (12, 13)) ORDER BY id DESC LIMIT 16 OFFSET 0`;
+      return db.all(query);
+    }
+
     return db.all(
       `SELECT *
         FROM questions
@@ -149,10 +161,17 @@ class Question extends BaseModel {
   }
 
   async getQuestionsCount(filters: any) {
-    console.log(filters);
+    if (filters) {
+      const sql = `SELECT COUNT(*) as count
+        FROM questions
+        WHERE ${filters}
+      `;
+      return db.get(sql);
+    }
     return db.get(
       `SELECT COUNT(*) as count
-        FROM questions`,
+        FROM questions
+        `,
     );
   }
 
@@ -184,9 +203,17 @@ class Question extends BaseModel {
     );
   }
 
-  read = undefined;
+  async delete(id: number) {
+    return db.run(
+      `DELETE
+            FROM questions
+            WHERE id = ?;
+            `,
+      [id],
+    );
+  }
 
-  delete = undefined;
+  read = undefined;
 }
 
 export default new Question();

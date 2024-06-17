@@ -7,5 +7,5 @@ export default abstract class BaseModel {
 
   public abstract update?(id: string | number, data: unknown): Promise<unknown>
 
-  public abstract delete?(id: string): Promise<unknown>
+  public abstract delete?(id: string | number): Promise<unknown>
 }

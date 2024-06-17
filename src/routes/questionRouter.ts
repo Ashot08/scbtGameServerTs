@@ -1,5 +1,5 @@
 import express from 'express';
-import { check } from 'express-validator';
+import { check, query } from 'express-validator';
 import AuthMiddleware from '../middleware/authMiddleware.ts';
 import QuestionController from '../controllers/QuestionController.ts';
 import { userTypeMiddleware } from '../middleware/userTypeMiddleware.ts';
@@ -30,10 +30,18 @@ questionRouter.put('/update_question', [
   check('id', 'ID вопроса должно быть числом').isNumeric(),
 ], AuthMiddleware, userTypeMiddleware([UserType.Admin]), QuestionController.updateQuestion);
 
+questionRouter.delete('/delete_questions', [
+  check('ids', 'IDS должно быть массивом').isArray(),
+  check('ids', 'IDS не должно быть пустым').notEmpty(),
+], AuthMiddleware, userTypeMiddleware([UserType.Admin]), QuestionController.deleteQuestionsByIds);
+
 questionRouter.get('/questions', [
   // check('count', 'Количество не может быть пустым').notEmpty(),
   // check('offset', 'Отступ не может быть пустым').notEmpty(),
   // check('filters', 'Фильтр не может быть пустым').notEmpty(),
+  query('text', ).escape(),
+  query('text', ).trim(),
+  query('cats', ).escape(),
 ], AuthMiddleware, userTypeMiddleware([UserType.Admin]), QuestionController.getQuestions);
 
 questionRouter.get('/question', [

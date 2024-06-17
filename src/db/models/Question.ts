@@ -144,10 +144,6 @@ class Question extends BaseModel {
         WHERE ${filters}
         ORDER BY id DESC
         LIMIT ${limit} OFFSET ${offset}`;
-      console.log(query);
-      // const query = `SELECT *
-      //   FROM questions
-      //   WHERE text LIKE '%%' AND id IN (SELECT question_id as id FROM questions_questionCats WHERE questionCat_id IN (12, 13)) ORDER BY id DESC LIMIT 16 OFFSET 0`;
       return db.all(query);
     }
 

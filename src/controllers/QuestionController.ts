@@ -192,17 +192,19 @@ class QuestionController {
       });
     }
     try {
-      const { limit, offset, text, cats } = req.query;
+      const {
+        limit, offset, text, cats,
+      } = req.query;
       let count = 0;
       let questions = [];
       let filters = '';
 
-      if(text) {
+      if (text) {
         filters = `text LIKE '%${text}%' `;
       }
 
-      if(cats) {
-        if(filters) {
+      if (cats) {
+        if (filters) {
           filters += `AND id IN (SELECT question_id as id FROM questions_questionCats WHERE questionCat_id IN (${cats}))`;
         } else {
           filters += `id IN (SELECT question_id as id FROM questions_questionCats WHERE questionCat_id IN (${cats}))`;

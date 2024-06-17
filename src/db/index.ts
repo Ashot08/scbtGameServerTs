@@ -21,7 +21,7 @@ await db.exec(`
       username TEXT UNIQUE,
       name TEXT,
       email TEXT,
-      password TEXT
+      password TEXT,
       type TEXT
   );
 `);
@@ -43,7 +43,8 @@ await db.exec(`
       answers_mode TEXT,
       shift_change_mode TEXT,
       show_roll_result_mode TEXT,
-      answer_time INTEGER
+      answer_time INTEGER,
+      players_order TEXT
   );
 `);
 

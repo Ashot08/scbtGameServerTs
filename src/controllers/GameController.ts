@@ -12,7 +12,7 @@ import {
   getNewActiveDefendsScheme,
   getNewNotActiveDefendsScheme,
   getNewWorkersPositionsScheme, getNextWorkerIndex, getNotActiveDefendsCount,
-  getWorkersOnPositionsCount, getWorkersPositionsFirstIndex,
+  getWorkersOnPositionsCount, getWorkersPositionsFirstIndex, isGamePlayersOrderCorrect,
 } from '../utils/game.ts';
 import {
   ANSWER_TIME_LONG,
@@ -60,6 +60,7 @@ class GameController {
         brigadierStage: 'ready',
         brigadierQuestionsCount: BRIGADIER_QUESTIONS_COUNT,
         answerTime,
+        playersOrder: '',
       };
 
       const result: RunResult = await Game.create(game);
@@ -150,8 +151,12 @@ class GameController {
 
       if (result.lastID) {
         // Если ок, добавляем игрока в players_state
+        if (!game.players_order) {
+          await Game.updateGamePlayersOrder(`${playerId}`, gameId);
+        } else {
+          await Game.updateGamePlayersOrder(`${game.players_order},${playerId}`, gameId);
+        }
         await Game.createPlayerState(data.gameId, data.playerId);
-
         return { status: 'success', message: 'Игрок успешно добавлен в игру' };
       }
     } catch (e) {
@@ -230,6 +235,39 @@ class GameController {
     }
   }
 
+  async updateGamePlayersOrder(order: string, gameId: number, isChangeBeforeStart = false) {
+    try {
+      const game = await Game.read({ id: gameId });
+
+      if(isChangeBeforeStart) {
+        const turns = await Game.getTurns(gameId);
+        if (Array.isArray(turns) && turns.length) {
+          const lastTurn = turns.slice(-1)[0];
+          const isChangeOrderAvailable = game.shift_change_mode === 'true' && lastTurn.shift === 1;
+          if(!isChangeOrderAvailable) {
+            return { status: 'error', message: 'Ошибка при обновлении game  Players Order' };
+          }
+        }
+      }
+
+      const playersArray = await Game.getPlayersByGameId({ id: gameId });
+
+      if(!Array.isArray(playersArray) || !playersArray.length) {
+        return { status: 'error', message: 'Ошибка при обновлении game  Players Order' };
+      }
+      const canUpdate = isGamePlayersOrderCorrect(game, playersArray, order);
+      if (canUpdate) {
+        const result = await Game.updateGamePlayersOrder(order, gameId);
+        if (result.changes) {
+          return { status: 'success', message: 'game Players Order обновлен' };
+        }
+      }
+      return { status: 'error', message: 'Ошибка при обновлении game  Players Order' };
+    } catch (e) {
+      return { status: 'error', message: 'Ошибка при обновлении game  Players Order' };
+    }
+  }
+
   async updateBrigadierStage(stage: 'ready' | 'in_process' | 'finished', gameId: number) {
     try {
       const result = await Game.updateBrigadierStage(stage, gameId);
@@ -270,10 +308,20 @@ class GameController {
   async createTurn(gameId: number) {
     try {
       const turns = await Game.getTurns(gameId);
-      const players = await Game.getPlayersByGameId({ id: gameId });
+      const playersArray = await Game.getPlayersByGameId({ id: gameId });
+      const game = await Game.read({ id: gameId });
+
+      if(!Array.isArray(playersArray) || !playersArray.length) {
+        return { status: 'error', message: 'Ошибка создания хода 1' };
+      }
+
+      if (!isGamePlayersOrderCorrect(game, playersArray, game.players_order)) {
+        return { status: 'error', message: 'Ошибка создания хода 2' };
+      }
+      const players = game.players_order.split(',');
 
       if (!Array.isArray(turns) || !Array.isArray(players) || !players.length || !turns.length) {
-        return { status: 'error', message: 'Ошибка создания хода' };
+        return { status: 'error', message: 'Ошибка создания хода 3' };
       }
 
       const lastTurn = turns.slice(-1)[0];
@@ -297,7 +345,17 @@ class GameController {
   async createTurnOnDeletePlayer(gameId: number) {
     try {
       let turns = await Game.getTurns(gameId);
-      const players = await Game.getPlayersByGameId({ id: gameId });
+      // const players = await Game.getPlayersByGameId({ id: gameId });
+      const game = await Game.read({ id: gameId });
+      const playersArray = await Game.getPlayersByGameId({ id: gameId });
+
+      if(!Array.isArray(playersArray) || !playersArray.length) {
+        return { status: 'error', message: 'Ошибка создания хода' };
+      }
+      if (!isGamePlayersOrderCorrect(game, playersArray, game.players_order)) {
+        return { status: 'error', message: 'Ошибка создания хода' };
+      }
+      const players = game.players_order.split(',');
       let lastTurn = 0;
 
       if (!Array.isArray(turns) || !turns.length) {

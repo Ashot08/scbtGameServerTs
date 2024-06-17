@@ -259,6 +259,7 @@ export default (io: any, socket: any) => {
       if(gameState?.state?.players === undefined) {
         throw new TypeError('players is not an Array');
       }
+      const newOrder = gameState.state.game.players_order.split(',').filter((pId: any) => +pId !== +data.id).join();
       if(Array.isArray(gameState?.state?.players)) {
         const player = gameState?.state?.players.filter((p)=> p.id == data.id)[0];
         if(gameState.state.players.length > 2) {
@@ -266,6 +267,7 @@ export default (io: any, socket: any) => {
           if (result.status === 'success') {
             await  GameController.deleteTurn(socket.roomId, data.id);
             await GameController.updatePlayersCount(socket.roomId);
+            await GameController.updateGamePlayersOrder(newOrder, socket.roomId);
             if(data.nextTurn) {
               await GameController.createTurnOnDeletePlayer(socket.roomId);
             }
@@ -310,6 +312,17 @@ export default (io: any, socket: any) => {
       socket.emit('game:updateState', gameState);
     }
   }
+  async function updatePlayersOrder(data: any) {
+    try {
+      const result = await GameController.updateGamePlayersOrder(data.order, socket.roomId, true);
+      if(result.status === 'success') {
+        const gameState = await GameController.getState(socket.roomId);
+        io.to(socket.roomId).emit('game:updateState', gameState);
+      }
+    } catch (e: any) {
+      socket.emit('notification', { status: 'error', message: 'updatePlayersOrder Error' });
+    }
+  }
 
   function sendChatNotification(data: any){
     io.to(socket.roomId).emit(
@@ -331,4 +344,5 @@ export default (io: any, socket: any) => {
   socket.on('game:moderator_notification', sendChatNotification);
   socket.on('game:change_ready_to_start_brigadier', changeReadyToStartBrigadier);
   socket.on('game:add_defend_from_brigadier', addDefendsFromBrigadier);
+  socket.on('game:update_players_order', updatePlayersOrder);
 };

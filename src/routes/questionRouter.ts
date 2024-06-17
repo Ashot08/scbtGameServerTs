@@ -39,9 +39,9 @@ questionRouter.get('/questions', [
   // check('count', 'Количество не может быть пустым').notEmpty(),
   // check('offset', 'Отступ не может быть пустым').notEmpty(),
   // check('filters', 'Фильтр не может быть пустым').notEmpty(),
-  query('text', ).escape(),
-  query('text', ).trim(),
-  query('cats', ).escape(),
+  query('text').escape(),
+  query('text').trim(),
+  query('cats').escape(),
 ], AuthMiddleware, userTypeMiddleware([UserType.Admin]), QuestionController.getQuestions);
 
 questionRouter.get('/question', [

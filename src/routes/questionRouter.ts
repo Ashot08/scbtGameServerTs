@@ -22,6 +22,14 @@ questionRouter.post('/create_question', [
   check('difficulty', 'Сложность вопроса не может быть пустым').notEmpty(),
 ], AuthMiddleware, userTypeMiddleware([UserType.Admin]), QuestionController.createQuestion);
 
+questionRouter.put('/update_question', [
+  check('text', 'Текст вопроса не может быть пустым').notEmpty(),
+  check('type', 'Тип вопроса не может быть пустым').notEmpty(),
+  check('difficulty', 'Сложность вопроса не может быть пустым').notEmpty(),
+  check('id', 'ID вопроса не может быть пустым').notEmpty(),
+  check('id', 'ID вопроса должно быть числом').isNumeric(),
+], AuthMiddleware, userTypeMiddleware([UserType.Admin]), QuestionController.updateQuestion);
+
 questionRouter.get('/questions', [
   // check('count', 'Количество не может быть пустым').notEmpty(),
   // check('offset', 'Отступ не может быть пустым').notEmpty(),

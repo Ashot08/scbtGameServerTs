@@ -89,6 +89,15 @@ class Question extends BaseModel {
     );
   }
 
+  async update(id: number, data: QuestionOptions) {
+    const { text, difficulty, type } = data;
+    return db.run(`UPDATE questions 
+        SET text = ?, 
+        difficulty = ?, 
+        type = ? 
+        WHERE id = ?`, text, difficulty, type, id);
+  }
+
   async createVariant(data: QuestionVariantOptions) {
     const { text, correct, questionId } = data;
     return db.run(
@@ -105,6 +114,26 @@ class Question extends BaseModel {
             (questionCat_id, question_id) 
             VALUES (?, ?)`,
       [catId, questionId],
+    );
+  }
+
+  async removeAllCatsFromQuestion(questionId: number) {
+    return db.run(
+      `DELETE
+            FROM questions_questionCats
+            WHERE question_id = ?;
+            `,
+      [questionId],
+    );
+  }
+
+  async removeAllVariantsByQuestionId(questionId: number) {
+    return db.run(
+      `DELETE
+            FROM variants
+            WHERE question_id = ?;
+            `,
+      [questionId],
     );
   }
 
@@ -156,8 +185,6 @@ class Question extends BaseModel {
   }
 
   read = undefined;
-
-  update = undefined;
 
   delete = undefined;
 }

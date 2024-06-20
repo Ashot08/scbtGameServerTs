@@ -186,6 +186,16 @@ class GameController {
     }
   }
 
+  async deleteAllTurns(gameId: number) {
+    try {
+      const result = await Game.deleteAllTurns(gameId);
+      console.log(result);
+      return { status: 'success', message: 'deleteAllTurns success' };
+    } catch (e) {
+      return { status: 'error', message: 'deleteAllTurns controller error' };
+    }
+  }
+
   async getState(gameId: number) {
     try {
       let game = await Game.read({ id: gameId });
@@ -239,12 +249,12 @@ class GameController {
     try {
       const game = await Game.read({ id: gameId });
 
-      if(isChangeBeforeStart) {
+      if (isChangeBeforeStart) {
         const turns = await Game.getTurns(gameId);
         if (Array.isArray(turns) && turns.length) {
           const lastTurn = turns.slice(-1)[0];
           const isChangeOrderAvailable = game.shift_change_mode === 'true' && lastTurn.shift === 1;
-          if(!isChangeOrderAvailable) {
+          if (!isChangeOrderAvailable) {
             return { status: 'error', message: 'Ошибка при обновлении game  Players Order' };
           }
         }
@@ -252,7 +262,7 @@ class GameController {
 
       const playersArray = await Game.getPlayersByGameId({ id: gameId });
 
-      if(!Array.isArray(playersArray) || !playersArray.length) {
+      if (!Array.isArray(playersArray) || !playersArray.length) {
         return { status: 'error', message: 'Ошибка при обновлении game  Players Order' };
       }
       const canUpdate = isGamePlayersOrderCorrect(game, playersArray, order);
@@ -311,7 +321,7 @@ class GameController {
       const playersArray = await Game.getPlayersByGameId({ id: gameId });
       const game = await Game.read({ id: gameId });
 
-      if(!Array.isArray(playersArray) || !playersArray.length) {
+      if (!Array.isArray(playersArray) || !playersArray.length) {
         return { status: 'error', message: 'Ошибка создания хода 1' };
       }
 
@@ -320,7 +330,7 @@ class GameController {
       }
       const players = game.players_order.split(',');
 
-      if (!Array.isArray(turns) || !Array.isArray(players) || !players.length || !turns.length) {
+      if (!Array.isArray(turns) || !Array.isArray(players) || !players.length) {
         return { status: 'error', message: 'Ошибка создания хода 3' };
       }
 
@@ -349,7 +359,7 @@ class GameController {
       const game = await Game.read({ id: gameId });
       const playersArray = await Game.getPlayersByGameId({ id: gameId });
 
-      if(!Array.isArray(playersArray) || !playersArray.length) {
+      if (!Array.isArray(playersArray) || !playersArray.length) {
         return { status: 'error', message: 'Ошибка создания хода' };
       }
       if (!isGamePlayersOrderCorrect(game, playersArray, game.players_order)) {

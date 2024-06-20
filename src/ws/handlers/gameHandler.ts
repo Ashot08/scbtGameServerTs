@@ -316,8 +316,15 @@ export default (io: any, socket: any) => {
     try {
       const result = await GameController.updateGamePlayersOrder(data.order, socket.roomId, true);
       if(result.status === 'success') {
+        await GameController.deleteAllTurns(socket.roomId);
+        await GameController.createTurn(socket.roomId);
+        // console.log(createTurnResult);
         const gameState = await GameController.getState(socket.roomId);
         io.to(socket.roomId).emit('game:updateState', gameState);
+        io.to(socket.roomId).emit(
+          'notification',
+          { status: 'success', message: `Очередность игроков изменена` }
+        );
       }
     } catch (e: any) {
       socket.emit('notification', { status: 'error', message: 'updatePlayersOrder Error' });

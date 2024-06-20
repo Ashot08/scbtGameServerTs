@@ -195,6 +195,16 @@ class Game extends BaseModel {
     );
   }
 
+  async deleteAllTurns(gameId: number): Promise<RunResult> {
+    return db.run(
+      `DELETE 
+            FROM turns
+            WHERE game_id = ?;
+            `,
+      [gameId],
+    );
+  }
+
   async deletePlayerState(gameId: number, playerId: number): Promise<RunResult> {
     return db.run(
       `DELETE 

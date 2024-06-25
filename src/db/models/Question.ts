@@ -12,6 +12,7 @@ export interface QuestionCatOptions {
 }
 
 export interface QuestionOptions {
+  id?: number,
   text: string,
   type: number,
   difficulty: number,
@@ -156,6 +157,22 @@ class Question extends BaseModel {
     );
   }
 
+  async getAllQuestionsByCats(cats: number[]) {
+    if (cats.length) {
+      const catsString = cats.join();
+      const query = `SELECT *
+        FROM questions
+        WHERE id IN (SELECT question_id as id FROM questions_questionCats WHERE questionCat_id IN (${catsString}))
+        ORDER BY id DESC`;
+      return db.all(query);
+    }
+    return db.all(
+      `SELECT *
+        FROM questions
+        ORDER BY id DESC`,
+    );
+  }
+
   async getQuestionsCount(filters: any) {
     if (filters) {
       const sql = `SELECT COUNT(*) as count
@@ -193,6 +210,15 @@ class Question extends BaseModel {
   async getQuestionVariantsByQuestionId(questionId: number) {
     return db.all(
       `SELECT *
+        FROM variants 
+        WHERE question_id = ? ORDER BY id ASC`,
+      questionId,
+    );
+  }
+
+  async getQuestionVariantsByQuestionIdPublic(questionId: number) {
+    return db.all(
+      `SELECT id, text, question_id
         FROM variants 
         WHERE question_id = ? ORDER BY id ASC`,
       questionId,

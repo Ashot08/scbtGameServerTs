@@ -1,7 +1,7 @@
 import Game from '../db/models/Game.ts';
 import Answer from '../db/models/Answer.ts';
 import { getQuestionNumber } from '../utils/getQuestionNumber.ts';
-import Question from '../db/models/Question.ts';
+import Question, { QuestionOptions } from '../db/models/Question.ts';
 
 class AnswerController {
   async createAnswers(gameId: number) {
@@ -19,12 +19,22 @@ class AnswerController {
         return { status: 'error', message: 'Ошибка создания ответов' };
       }
       const lastRoll = rolls.slice(-1)[0];
-      const gameQuestionCats = await Question.getQuestionCatsByGameId(gameId);
-      console.log('start');
-      const questionNumber = getQuestionNumber(answers, gameQuestionCats);
-      console.log('end');
-      let result = null;
 
+      let gameQuestionCats = await Question.getQuestionCatsByGameId(gameId);
+
+      let questions: QuestionOptions[] = [];
+      if (!Array.isArray(gameQuestionCats) || !gameQuestionCats.length) {
+        gameQuestionCats = [];
+      }
+
+      questions = await Question.getAllQuestionsByCats(gameQuestionCats.map((c) => c.id)) as QuestionOptions[];
+      if (!Array.isArray(questions) || !questions.length) {
+        console.log('IN ERROR', questions);
+        return { status: 'error', message: 'Ошибка при создании ответов, нет вопросов' };
+      }
+
+      const questionNumber = getQuestionNumber(questions, answers);
+      let result = null;
       for (const player of players) {
         const isActivePlayerQuestion: 'true' | 'false' = (player.id === lastTurn.player_id) ? 'true' : 'false';
 
@@ -50,6 +60,7 @@ class AnswerController {
       }
       return { status: 'error', message: 'Ошибка при создании ответов' };
     } catch (e) {
+      console.log(e)
       return { status: 'error', message: 'Ошибка при создании ответов' };
     }
   }

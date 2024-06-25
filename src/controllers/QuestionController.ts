@@ -254,6 +254,36 @@ class QuestionController {
     }
   }
 
+  async getQuestionByIdPublic(req: any, res: any) {
+    const validationErrors = validationResult(req);
+    if (!validationErrors.isEmpty()) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Ошибка при валидации данных',
+        validationErrors,
+      });
+    }
+    try {
+      const { id } = req.query;
+      const questionResult = await Question.getQuestionById(id);
+      if (questionResult) {
+        const catsResult = await Question.getQuestionCatsByQuestionId(id);
+        if (Array.isArray(catsResult)) {
+          questionResult.cats = catsResult;
+        }
+
+        const variantsResult = await Question.getQuestionVariantsByQuestionIdPublic(id);
+        if (Array.isArray(variantsResult)) {
+          questionResult.variants = variantsResult;
+        }
+        return res.json({ message: 'Success Get QuestionById', questionResult });
+      }
+      return res.status(400).json({ message: 'Get Question error' });
+    } catch (e: any) {
+      return res.status(400).json({ message: 'Get Question By Id error' });
+    }
+  }
+
   async deleteQuestionsByIds(req: any, res: any) {
     const validationErrors = validationResult(req);
     if (!validationErrors.isEmpty()) {

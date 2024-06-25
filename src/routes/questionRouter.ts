@@ -49,6 +49,11 @@ questionRouter.get('/question', [
   check('id', 'Id должно быть числом').isNumeric(),
 ], AuthMiddleware, userTypeMiddleware([UserType.Admin]), QuestionController.getQuestionById);
 
+questionRouter.get('/question_public', [
+  check('id', 'Id не может быть пустым').notEmpty(),
+  check('id', 'Id должно быть числом').isNumeric(),
+], AuthMiddleware, QuestionController.getQuestionByIdPublic);
+
 // questionRouter.get('/games/:playerId', AuthMiddleware, GameController.getGamesByPlayerId);
 questionRouter.get('/cats', AuthMiddleware, QuestionController.getQuestionCats);
 questionRouter.get('/cats/:gameId', AuthMiddleware, QuestionController.getQuestionCatsByGameId);

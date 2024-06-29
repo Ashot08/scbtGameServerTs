@@ -10,3 +10,9 @@ export type DbAnswer = {
   start_time: string,
   end_time: string
 }
+
+export enum AnswerCorrect {
+  True = 'true',
+  False = 'false',
+}
+

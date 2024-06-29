@@ -216,6 +216,15 @@ class Question extends BaseModel {
     );
   }
 
+  async getQuestionVariantById(id: number) {
+    return db.get(
+      `SELECT *
+        FROM variants 
+        WHERE id = ?`,
+      [id],
+    );
+  }
+
   async getQuestionVariantsByQuestionIdPublic(questionId: number) {
     return db.all(
       `SELECT id, text, question_id

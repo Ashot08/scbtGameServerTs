@@ -6,7 +6,6 @@ import Question, { QuestionOptions } from '../db/models/Question.ts';
 class AnswerController {
   async createAnswers(gameId: number) {
     try {
-      console.log('start creating');
       const turns = await Game.getTurns(gameId);
       const players = await Game.getPlayersByGameId({ id: gameId });
       const answers = await Answer.getAnswers(gameId);
@@ -29,7 +28,6 @@ class AnswerController {
 
       questions = await Question.getAllQuestionsByCats(gameQuestionCats.map((c) => c.id)) as QuestionOptions[];
       if (!Array.isArray(questions) || !questions.length) {
-        console.log('IN ERROR', questions);
         return { status: 'error', message: 'Ошибка при создании ответов, нет вопросов' };
       }
 
@@ -60,7 +58,6 @@ class AnswerController {
       }
       return { status: 'error', message: 'Ошибка при создании ответов' };
     } catch (e) {
-      console.log(e)
       return { status: 'error', message: 'Ошибка при создании ответов' };
     }
   }
@@ -72,8 +69,17 @@ class AnswerController {
       if (!Array.isArray(players) || !players.length) {
         return { status: 'error', message: 'Ошибка создания ответов Brigadier' };
       }
-      const gameQuestionCats = await Question.getQuestionCatsByGameId(gameId);
-      const questionNumber = getQuestionNumber(answers, gameQuestionCats);
+
+      let gameQuestionCats = await Question.getQuestionCatsByGameId(gameId);
+      let questions: QuestionOptions[] = [];
+      if (!Array.isArray(gameQuestionCats) || !gameQuestionCats.length) {
+        gameQuestionCats = [];
+      }
+      questions = await Question.getAllQuestionsByCats(gameQuestionCats.map((c) => c.id)) as QuestionOptions[];
+      if (!Array.isArray(questions) || !questions.length) {
+        return { status: 'error', message: 'Ошибка при создании ответов, нет вопросов' };
+      }
+      const questionNumber = getQuestionNumber(questions, answers);
 
       let result = null;
 
@@ -110,11 +116,28 @@ class AnswerController {
     try {
       const result = await Answer.updateAnswerStatus(status, answerId);
       if (result.changes) {
-        return { status: 'success', message: 'Ответ обновлен' };
+        return {
+          status: 'success',
+          message: 'Ответ обновлен',
+          correct: (status === 'success') ? 'true' : 'false',
+        };
       }
       return { status: 'error', message: 'Ошибка при обновлении ответа' };
     } catch (e) {
       return { status: 'error', message: 'Ошибка при обновлении ответа' };
+    }
+  }
+
+  async checkCorrectAndUpdateAnswer(variantId: number, answerId: number) {
+    try {
+      const variant = await Question.getQuestionVariantById(variantId);
+      if (variant) {
+        const status = (variant.correct === 'true') ? 'success' : 'error';
+        return await this.updateAnswerStatus(status, answerId);
+      }
+      return { status: 'error', message: 'Ошибка при проверке и обновлении ответа' };
+    } catch (e) {
+      return { status: 'error', message: 'Ошибка при проверке и обновлении ответа' };
     }
   }
 

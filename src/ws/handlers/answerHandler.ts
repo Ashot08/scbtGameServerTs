@@ -2,6 +2,7 @@ import GameController from '../../controllers/GameController.ts';
 import AnswerController from '../../controllers/AnswerController.ts';
 import { getActiveDefendsCount } from '../../utils/game.ts';
 import { MAX_BRIGADIER_DEFENDS_COUNT } from '../../constants/constants.ts';
+import {AnswerCorrect} from "../../typings/types.ts";
 
 export default (io: any, socket: any) => {
   async function startAnswers() {
@@ -70,16 +71,24 @@ export default (io: any, socket: any) => {
     }
   }
 
-  async function updateAnswer(data: any) {
+  async function updateAnswer(data: {variantId: number, answerId: number }) {
     try {
       await AnswerController.updateExpiredAnswerEndTime(socket.roomId);
-      const result = await AnswerController.updateAnswerStatus(data.status, data.answerId);
+      const result = await AnswerController.checkCorrectAndUpdateAnswer(data.variantId, data.answerId);
 
-      if (!result) throw new Error('Update Answers error');
+      if (!(result.status === 'success')) {
+        throw new Error('Update Answers error 1');
+      }
+      const isAnswerCorrect = result?.correct;
+      if(!isAnswerCorrect) {
+        throw new Error('Update Answers error 2');
+      }
+      if(!(isAnswerCorrect in AnswerCorrect)) {
+        throw new Error('Update Answers error 3');
+      }
+
       const gameState = await GameController.getState(socket.roomId);
-
       const answer = gameState.state?.answers.find((a) => a.id === data.answerId);
-
       if (answer.is_active_player_question === 'true') {
         // логика ответов травма / групповая
         const playerState = await GameController.getPlayerState(socket.roomId, answer.player_id);
@@ -102,7 +111,7 @@ export default (io: any, socket: any) => {
             playerState,
             -1,
           );
-          if (data.status === 'success') {
+          if (isAnswerCorrect === AnswerCorrect.True) {
             await GameController.updateActiveDefends(
               socket.roomId,
               playerState,
@@ -125,13 +134,13 @@ export default (io: any, socket: any) => {
           }
         } else if (questionsWithoutDefCount > 0) {
           // ответ без права на ошибку
-          const newCount = data.status === 'error' ? 0 : questionsWithoutDefCount - 1;
+          const newCount = isAnswerCorrect === AnswerCorrect.False ? 0 : questionsWithoutDefCount - 1;
           await GameController.updateQuestionsWithoutDef(
             playerState.player_id,
             socket.roomId,
             newCount,
           );
-          if (data.status === 'error') {
+          if (isAnswerCorrect === AnswerCorrect.False) {
             await GameController.applyPunishment(socket.roomId, playerState);
             if (playerState.accident_difficultly > 2) {
               socket.emit('game:workerFail', { status: 'Потеря' });
@@ -139,7 +148,7 @@ export default (io: any, socket: any) => {
               socket.emit('game:workerFail', { status: 'Штраф' });
             }
           }
-          if (data.status === 'success') {
+          if (isAnswerCorrect === AnswerCorrect.True) {
             if (questionsWithoutDefCount < 2) {
               socket.emit('game:workerSaved', { status: 'Спасен' });
             }
@@ -151,11 +160,11 @@ export default (io: any, socket: any) => {
             playerState.player_id,
             questionsToNextWorkerCount - 1,
           );
-          if (data.status === 'error') {
+          if (isAnswerCorrect === AnswerCorrect.False) {
             await GameController.applyNextWorkerPunishment(socket.roomId, playerState);
             socket.emit('game:workerFail', { status: 'Штраф' });
           }
-          if (data.status === 'success') {
+          if (isAnswerCorrect === AnswerCorrect.True) {
             socket.emit('game:workerSaved', { status: 'Спасен' });
           }
         } else {
@@ -164,7 +173,6 @@ export default (io: any, socket: any) => {
         }
 
         const gameState = await GameController.getState(socket.roomId);
-        // socket.emit('game:updateState', gameState);
         io.to(socket.roomId).emit('game:updateState', gameState);
         io.to(socket.roomId).emit('answer:startTimer');
       } else {

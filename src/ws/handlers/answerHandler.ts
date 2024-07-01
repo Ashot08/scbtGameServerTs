@@ -2,7 +2,7 @@ import GameController from '../../controllers/GameController.ts';
 import AnswerController from '../../controllers/AnswerController.ts';
 import { getActiveDefendsCount } from '../../utils/game.ts';
 import { MAX_BRIGADIER_DEFENDS_COUNT } from '../../constants/constants.ts';
-import {AnswerCorrect} from "../../typings/types.ts";
+import { AnswerCorrect } from '../../typings/types.ts';
 
 export default (io: any, socket: any) => {
   async function startAnswers() {
@@ -77,17 +77,18 @@ export default (io: any, socket: any) => {
       const result = await AnswerController.checkCorrectAndUpdateAnswer(data.variantId, data.answerId);
 
       if (!(result.status === 'success')) {
+        console.log(result);
         throw new Error('Update Answers error 1');
       }
       const isAnswerCorrect = result?.correct;
-      if(!isAnswerCorrect) {
+      if (!isAnswerCorrect) {
         throw new Error('Update Answers error 2');
       }
-      if(!(isAnswerCorrect in AnswerCorrect)) {
-        throw new Error('Update Answers error 3');
-      }
+
+      socket.emit('notification', { status: 'error', message: isAnswerCorrect === AnswerCorrect.True ? 'Верно' : 'Вы ошиблись' });
 
       const gameState = await GameController.getState(socket.roomId);
+
       const answer = gameState.state?.answers.find((a) => a.id === data.answerId);
       if (answer.is_active_player_question === 'true') {
         // логика ответов травма / групповая
@@ -180,7 +181,7 @@ export default (io: any, socket: any) => {
         socket.emit('game:updateState', gameState);
       }
     } catch (e) {
-      socket.emit('notification', { status: 'error', message: 'Create Answers error' });
+      socket.emit('notification', { status: 'error', message: 'updateAnswer error 23' });
     }
   }
 

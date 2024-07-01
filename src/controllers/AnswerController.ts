@@ -2,6 +2,7 @@ import Game from '../db/models/Game.ts';
 import Answer from '../db/models/Answer.ts';
 import { getQuestionNumber } from '../utils/getQuestionNumber.ts';
 import Question, { QuestionOptions } from '../db/models/Question.ts';
+import { AnswerCorrect } from '../typings/types.ts';
 
 class AnswerController {
   async createAnswers(gameId: number) {
@@ -132,12 +133,12 @@ class AnswerController {
     try {
       const variant = await Question.getQuestionVariantById(variantId);
       if (variant) {
-        const status = (variant.correct === 'true') ? 'success' : 'error';
+        const status = (variant.correct === AnswerCorrect.True) ? 'success' : 'error';
         return await this.updateAnswerStatus(status, answerId);
       }
-      return { status: 'error', message: 'Ошибка при проверке и обновлении ответа' };
+      return await this.updateAnswerStatus('error', answerId);
     } catch (e) {
-      return { status: 'error', message: 'Ошибка при проверке и обновлении ответа' };
+      return { status: 'error', message: 'Ошибка при проверке и обновлении ответа 2' };
     }
   }
 

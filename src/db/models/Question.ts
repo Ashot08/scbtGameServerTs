@@ -227,7 +227,7 @@ class Question extends BaseModel {
 
   async getQuestionVariantsByQuestionIdPublic(questionId: number) {
     return db.all(
-      `SELECT id, text, question_id
+      `SELECT id, text, question_id, correct
         FROM variants 
         WHERE question_id = ? ORDER BY id ASC`,
       questionId,

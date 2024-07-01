@@ -15,4 +15,3 @@ export enum AnswerCorrect {
   True = 'true',
   False = 'false',
 }
-

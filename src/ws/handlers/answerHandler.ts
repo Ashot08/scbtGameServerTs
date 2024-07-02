@@ -22,7 +22,9 @@ export default (io: any, socket: any) => {
   }
 
   async function startBrigadierAnswers() {
+    console.log('brigadier');
     try {
+      console.log('brigadier 1');
       const questionsCount = await GameController.getBrigadierQuestionsCount(socket.roomId);
       if (questionsCount > 0) {
         await GameController.updateBrigadierQuestionsCount(questionsCount - 1, socket.roomId);
@@ -34,7 +36,9 @@ export default (io: any, socket: any) => {
         const gameState = await GameController.getState(socket.roomId);
         io.to(socket.roomId).emit('game:updateState', gameState);
       }
+      console.log('brigadier 2');
     } catch (e) {
+      console.log('brigadier 3');
       socket.emit('notification', { status: 'error', message: 'createBrigadierAnswers error' });
     }
   }
@@ -76,8 +80,7 @@ export default (io: any, socket: any) => {
       await AnswerController.updateExpiredAnswerEndTime(socket.roomId);
       const result = await AnswerController.checkCorrectAndUpdateAnswer(data.variantId, data.answerId);
 
-      if (!(result.status === 'success')) {
-        console.log(result);
+      if (!(result?.status === 'success')) {
         throw new Error('Update Answers error 1');
       }
       const isAnswerCorrect = result?.correct;
@@ -185,15 +188,22 @@ export default (io: any, socket: any) => {
     }
   }
 
-  async function updateBrigadierAnswer(data: any) {
+  async function updateBrigadierAnswer(data: {variantId: number, answerId: number }) {
     try {
-      const result = await AnswerController.updateAnswerStatus(data.status, data.answerId);
+      const result = await AnswerController.checkCorrectAndUpdateAnswer(data.variantId, data.answerId);
 
-      if (!result) throw new Error('Update Answers error');
+      if (!(result?.status === 'success')) {
+        throw new Error('Update Answers error 1');
+      }
+      const isAnswerCorrect = result?.correct;
+      if (!isAnswerCorrect) {
+        throw new Error('Update Answers error 2');
+      }
+
       let gameState = await GameController.getState(socket.roomId);
       const answer = gameState.state?.answers.find((a) => a.id === data.answerId);
       const playerState = await GameController.getPlayerState(socket.roomId, answer.player_id);
-      if (data.status === 'success') {
+      if (isAnswerCorrect === AnswerCorrect.True) {
         const oldPlayerDefendsCount = playerState.brigadier_defends_count;
         if (oldPlayerDefendsCount < MAX_BRIGADIER_DEFENDS_COUNT) {
           await GameController.updatePlayerBrigadierDefendsCount(answer.player_id, socket.roomId, oldPlayerDefendsCount + 1);
@@ -202,7 +212,7 @@ export default (io: any, socket: any) => {
       gameState = await GameController.getState(socket.roomId);
       io.to(socket.roomId).emit('game:updateState', gameState);
     } catch (e) {
-      socket.emit('notification', { status: 'error', message: 'Create Answers error' });
+      socket.emit('notification', { status: 'error', message: 'Update Answers error' });
     }
   }
 

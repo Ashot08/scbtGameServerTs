@@ -81,7 +81,6 @@ class AnswerController {
         return { status: 'error', message: 'Ошибка при создании ответов, нет вопросов' };
       }
       const questionNumber = getQuestionNumber(questions, answers);
-
       let result = null;
 
       for (const player of players) {

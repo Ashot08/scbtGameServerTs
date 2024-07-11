@@ -18,6 +18,7 @@ export interface CreateGameData {
   brigadierStage: 'ready' | 'in_process' | 'finished',
   brigadierQuestionsCount: number,
   answerTime: number,
+  playersOrder: string,
 }
 export interface GameReadOptions {
   id?: number,
@@ -45,6 +46,7 @@ class Game extends BaseModel {
       brigadierStage,
       brigadierQuestionsCount,
       answerTime,
+      playersOrder,
     } = data;
 
     return db.run(
@@ -58,8 +60,10 @@ class Game extends BaseModel {
             moderator_mode, 
             answers_mode, 
             shift_change_mode, 
-            show_roll_result_mode, brigadier_mode, brigadier_stage, brigadier_questions_count, answer_time) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            show_roll_result_mode, 
+            brigadier_mode, brigadier_stage, brigadier_questions_count, answer_time,
+            players_order) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
       [
         title,
@@ -69,7 +73,8 @@ class Game extends BaseModel {
         creationDate,
         moderatorMode,
         answersMode,
-        shiftChangeMode, showRollResultMode, brigadierMode, brigadierStage, brigadierQuestionsCount, answerTime],
+        shiftChangeMode,
+        showRollResultMode, brigadierMode, brigadierStage, brigadierQuestionsCount, answerTime, playersOrder],
     );
   }
 
@@ -166,6 +171,10 @@ class Game extends BaseModel {
     return db.run('UPDATE games SET brigadier_questions_count = ? WHERE id = ?', count, gameId);
   }
 
+  async updateGamePlayersOrder(order: string, gameId: number) {
+    return db.run('UPDATE games SET players_order = ? WHERE id = ?', order, gameId);
+  }
+
   async createTurn(gameId: number, playerId: number, shift: number): Promise<RunResult> {
     return db.run(
       `INSERT INTO 
@@ -183,6 +192,16 @@ class Game extends BaseModel {
             WHERE game_id = ? AND player_id = ?;
             `,
       [gameId, playerId],
+    );
+  }
+
+  async deleteAllTurns(gameId: number): Promise<RunResult> {
+    return db.run(
+      `DELETE 
+            FROM turns
+            WHERE game_id = ?;
+            `,
+      [gameId],
     );
   }
 

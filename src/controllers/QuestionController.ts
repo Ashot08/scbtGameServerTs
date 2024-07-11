@@ -87,6 +87,228 @@ class QuestionController {
       return res.status(400).json({ message: 'Get Cats error' });
     }
   }
+
+  async createQuestion(req: any, res: any) {
+    const validationErrors = validationResult(req);
+
+    if (!validationErrors.isEmpty()) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Ошибка при валидации данных',
+        validationErrors,
+      });
+    }
+
+    try {
+      const question = { ...req.body };
+      // console.log(question);
+      // return res.json({ message: 'Success Get Cats', question: question });
+      const createQuestionResult = await Question.create({
+        text: question.text,
+        type: question.type,
+        difficulty: question.difficulty,
+      });
+      if (!createQuestionResult.lastID) {
+        return res.status(400).json({ message: 'Create Question error, question not created' });
+      }
+      if (Array.isArray(question.cats)) {
+        for (const cat of question.cats) {
+          // eslint-disable-next-line no-await-in-loop
+          await Question.addCatToQuestion(cat, createQuestionResult.lastID);
+        }
+      }
+      if (Array.isArray(question.variants)) {
+        for (const variant of question.variants) {
+          // eslint-disable-next-line no-await-in-loop
+          await Question.createVariant({
+            text: variant.text,
+            correct: variant.correct,
+            questionId: createQuestionResult.lastID,
+          });
+        }
+      }
+      return res.json({ message: 'Success Create Question', questionId: createQuestionResult.lastID });
+    } catch (e: any) {
+      return res.status(400).json({ message: 'Create Question error' });
+    }
+  }
+
+  async updateQuestion(req: any, res: any) {
+    const validationErrors = validationResult(req);
+
+    if (!validationErrors.isEmpty()) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Ошибка при валидации данных',
+        validationErrors,
+      });
+    }
+
+    try {
+      const question = { ...req.body };
+
+      await Question.removeAllCatsFromQuestion(question.id);
+      await Question.removeAllVariantsByQuestionId(question.id);
+      if (typeof question.id !== 'number') {
+        return res.status(400).json({ message: 'Update Question error, question not created' });
+      }
+      const updateQuestionResult = await Question.update(question.id, {
+        text: question.text,
+        type: question.type,
+        difficulty: question.difficulty,
+      });
+      if (!updateQuestionResult.changes) {
+        return res.status(400).json({ message: 'Update Question error, question not created' });
+      }
+      if (Array.isArray(question.cats)) {
+        for (const cat of question.cats) {
+          // eslint-disable-next-line no-await-in-loop
+          await Question.addCatToQuestion(cat, question.id);
+        }
+      }
+      if (Array.isArray(question.variants)) {
+        for (const variant of question.variants) {
+          // eslint-disable-next-line no-await-in-loop
+          await Question.createVariant({
+            text: variant.text,
+            correct: variant.correct,
+            questionId: question.id,
+          });
+        }
+      }
+      return res.json({ message: 'Success Update Question', questionId: question.id });
+    } catch (e: any) {
+      return res.status(400).json({ message: 'Update Question error' });
+    }
+  }
+
+  async getQuestions(req: any, res: any) {
+    const validationErrors = validationResult(req);
+    if (!validationErrors.isEmpty()) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Ошибка при валидации данных',
+        validationErrors,
+      });
+    }
+    try {
+      const {
+        limit, offset, text, cats,
+      } = req.query;
+      let count = 0;
+      let questions = [];
+      let filters = '';
+
+      if (text) {
+        filters = `text LIKE '%${text}%' `;
+      }
+
+      if (cats) {
+        if (filters) {
+          filters += `AND id IN (SELECT question_id as id FROM questions_questionCats WHERE questionCat_id IN (${cats}))`;
+        } else {
+          filters += `id IN (SELECT question_id as id FROM questions_questionCats WHERE questionCat_id IN (${cats}))`;
+        }
+      }
+
+      const countResult = await Question.getQuestionsCount(filters);
+      if (countResult.count) {
+        count = countResult.count;
+      }
+      if (count > 0) {
+        questions = await Question.getQuestions(limit, offset, filters);
+      }
+      return res.json({ message: 'Success Get Questions', questions, count });
+    } catch (e: any) {
+      return res.status(400).json({ message: 'Get Questions error' });
+    }
+  }
+
+  async getQuestionById(req: any, res: any) {
+    const validationErrors = validationResult(req);
+    if (!validationErrors.isEmpty()) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Ошибка при валидации данных',
+        validationErrors,
+      });
+    }
+    try {
+      const { id } = req.query;
+      const questionResult = await Question.getQuestionById(id);
+      if (questionResult) {
+        const catsResult = await Question.getQuestionCatsByQuestionId(id);
+        if (Array.isArray(catsResult)) {
+          questionResult.cats = catsResult;
+        }
+
+        const variantsResult = await Question.getQuestionVariantsByQuestionId(id);
+        if (Array.isArray(variantsResult)) {
+          questionResult.variants = variantsResult;
+        }
+        return res.json({ message: 'Success Get QuestionById', questionResult });
+      }
+      return res.status(400).json({ message: 'Get Question error' });
+    } catch (e: any) {
+      return res.status(400).json({ message: 'Get Question By Id error' });
+    }
+  }
+
+  async getQuestionByIdPublic(req: any, res: any) {
+    const validationErrors = validationResult(req);
+    if (!validationErrors.isEmpty()) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Ошибка при валидации данных',
+        validationErrors,
+      });
+    }
+    try {
+      const { id } = req.query;
+      const questionResult = await Question.getQuestionById(id);
+      if (questionResult) {
+        const catsResult = await Question.getQuestionCatsByQuestionId(id);
+        if (Array.isArray(catsResult)) {
+          questionResult.cats = catsResult;
+        }
+
+        const variantsResult = await Question.getQuestionVariantsByQuestionIdPublic(id);
+        if (Array.isArray(variantsResult)) {
+          questionResult.variants = variantsResult;
+        }
+        return res.json({ message: 'Success Get QuestionById', questionResult });
+      }
+      return res.status(400).json({ message: 'Get Question error' });
+    } catch (e: any) {
+      return res.status(400).json({ message: 'Get Question By Id error' });
+    }
+  }
+
+  async deleteQuestionsByIds(req: any, res: any) {
+    const validationErrors = validationResult(req);
+    if (!validationErrors.isEmpty()) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Ошибка при валидации данных',
+        validationErrors,
+      });
+    }
+    try {
+      const { ids } = req.body;
+      if (Array.isArray(ids)) {
+        for (const id of ids) {
+          if (typeof id === 'number') {
+            // eslint-disable-next-line no-await-in-loop
+            await Question.delete(id);
+          }
+        }
+        return res.json({ message: 'Success Get QuestionById' });
+      }
+      return res.status(400).json({ message: 'Delete Question error' });
+    } catch (e: any) {
+      return res.status(400).json({ message: 'Delete Question By Id error' });
+    }
+  }
 }
 
 export default new QuestionController();

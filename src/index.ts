@@ -1,7 +1,7 @@
 import express, { Response, Request } from 'express';
 import fileUpload from 'express-fileupload';
 import { createServer } from 'node:http';
-import { join } from 'node:path';
+import path, { join } from 'node:path';
 import { Server } from 'socket.io';
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -40,9 +40,17 @@ app.use('/file', fileUploadRouter);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+app.use(express.static(path.join(__dirname, 'public')));
+
 app.get('/', (req: Request, res: Response) => {
   console.log('req body (src/index.ts): ', req.body);
   res.sendFile(join(__dirname, 'index.html'));
+});
+
+const urlTemplate = './public/uploads/:file_name';
+app.get(urlTemplate, (req, res) => {
+  console.log(req.url);
+  res.sendFile(path.join(__dirname, urlTemplate));
 });
 
 server.listen(3001, () => {

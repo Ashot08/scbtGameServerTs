@@ -112,6 +112,11 @@ export const getNextWorkerIndex = (playerState: any, activeWorkerIndex: number) 
   return nextWorkerIndex;
 };
 
+export const isGamePlayersOrderCorrect = (game: any, playersArray: any, order: string) => {
+  const correctIds = playersArray.map((player: any) => player.id).sort().join() === order.split(',').sort().join();
+  return (game.players_count === order.split(',').length) && correctIds;
+};
+
 export const getAccidentDifficultlyByPrizeNumber = (prizeNumber: number | undefined) => {
   if (prizeNumber === undefined) {
     prizeNumber = 1;

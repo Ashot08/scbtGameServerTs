@@ -1,62 +1,23 @@
-import { QuestionCatOptions } from '../db/models/Question.ts';
-import { questions } from '../constants/questions.ts';
+import { QuestionOptions } from '../db/models/Question.ts';
+import { DbAnswer } from '../typings/types.ts';
 
-export const getQuestionNumber = (answers: any, gameQuestionCats: QuestionCatOptions []) => {
-  const utilizedQuestionsIndexes: number[] = [];
+export const getQuestionNumber = (questions: QuestionOptions[], answers: DbAnswer[]) => {
+  const exceptedAnswersIds: number[] = [];
   const questionsIndexes: number[] = [];
-  const allQuestions: any = questions.questions;
-
   if (Array.isArray(answers)) {
     for (const answer of answers) {
-      utilizedQuestionsIndexes.push(answer.question_id);
+      exceptedAnswersIds.push(answer.question_id);
     }
   }
-
-  // Фильтруем
-  if (Array.isArray(allQuestions)) {
-    const hasCats = Array.isArray(gameQuestionCats) && gameQuestionCats.length;
-    for (let i = 0; i < allQuestions.length; i += 1) {
-      let filterByCatPassed = false;
-      if (hasCats) {
-        for (const cat of gameQuestionCats) {
-          if (allQuestions[i].categories.includes(cat.id)) {
-            filterByCatPassed = true;
-          }
-        }
-      }
-      if (filterByCatPassed && !utilizedQuestionsIndexes.includes(i)) {
-        questionsIndexes.push(i);
-      }
-    }
+  const questionsFilteredByIdsUsedBefore = questions.filter(
+    (question: QuestionOptions) => !exceptedAnswersIds.includes(question.id as number),
+  );
+  if (questionsFilteredByIdsUsedBefore.length) {
+    questions = questionsFilteredByIdsUsedBefore;
   }
-
-  // Если в результате фильтрации нет ни одного доступного вопроса, фильтруем заново, учитывая только категории
-  if (!questionsIndexes.length) {
-    const hasCats = Array.isArray(gameQuestionCats) && gameQuestionCats.length;
-    for (let i = 0; i < allQuestions.length; i += 1) {
-      let filterByCatPassed = false;
-      if (hasCats) {
-        for (const cat of gameQuestionCats) {
-          if (allQuestions[i].categories.includes(cat.id)) {
-            filterByCatPassed = true;
-          }
-        }
-      }
-      if (filterByCatPassed) {
-        questionsIndexes.push(i);
-      }
-    }
+  for (let i = 0; i < questions.length; i += 1) {
+    questionsIndexes.push(questions[i].id as number);
   }
-
-  // Если всё равно нет ни одного доступного вопроса
-  if (!questionsIndexes.length) {
-    for (let i = 0; i < allQuestions.length; i += 1) {
-      questionsIndexes.push(i);
-    }
-  }
-
-  // console.log('questionsIndexes', questionsIndexes);
-
   const numberIndex = Math.floor(Math.random() * questionsIndexes.length);
   return questionsIndexes[numberIndex];
 };

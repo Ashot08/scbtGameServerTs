@@ -15,7 +15,7 @@ import {
   getWorkersOnPositionsCount, getWorkersPositionsFirstIndex, isGamePlayersOrderCorrect,
 } from '../utils/game.ts';
 import {
-  ANSWER_TIME_LONG,
+  ANSWER_TIME_LONG, ANSWER_TIME_MIDDLE,
   ANSWER_TIME_SHORT,
   BRIGADIER_QUESTIONS_COUNT,
   MAX_WORKER_DEFENDS_COUNT,
@@ -46,7 +46,10 @@ class GameController {
         return res.status(400).json({ message: 'Ошибка при валидации данных', validationErrors });
       }
 
-      if (req.body.quizMode === true) {
+      if (req.body.answerTime === 40) {
+        answerTime = ANSWER_TIME_MIDDLE;
+      }
+      if (req.body.answerTime === 60) {
         answerTime = ANSWER_TIME_LONG;
       }
 

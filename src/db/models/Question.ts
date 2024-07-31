@@ -9,6 +9,7 @@ export interface QuestionCatOptions {
   id?: number,
   title: string,
   slug: string,
+  parentId: number,
 }
 
 export interface QuestionOptions {
@@ -47,17 +48,27 @@ class Question extends BaseModel {
     // );
   }
 
+  async getQuestionCatsByParentId(parentId: number) {
+    return db.all(
+      `SELECT *
+        FROM questionCats
+        WHERE parent_id = ? ORDER BY id ASC`,
+      parentId,
+    );
+  }
+
   async createQuestionCat(options: QuestionCatOptions) {
     const {
       title,
       slug,
+      parentId,
     } = options;
     return db.run(
       `INSERT INTO 
-            questionCats (title, slug) 
-            VALUES (?, ?)
+            questionCats (title, slug, parent_id) 
+            VALUES (?, ?, ?)
       `,
-      [title, slug],
+      [title, slug, parentId],
     );
   }
 
@@ -78,6 +89,21 @@ class Question extends BaseModel {
             `,
       [catId],
     );
+  }
+
+  async updateQuestionCat(data: QuestionCatOptions) {
+    const {
+      id,
+      title,
+      slug,
+      parentId,
+    } = data;
+
+    return db.run(`UPDATE questionCats 
+        SET title = ?, 
+        slug = ?, 
+        parent_id = ? 
+        WHERE id = ?`, title, slug, parentId, id);
   }
 
   async create(data: QuestionOptions) {

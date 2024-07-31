@@ -1,6 +1,9 @@
 export const MAX_WORKER_DEFENDS_COUNT = 6;
 export const BRIGADIER_QUESTIONS_COUNT = 3;
 export const MAX_BRIGADIER_DEFENDS_COUNT = 3;
-export const ANSWER_TIME_SHORT = 25;
-export const ANSWER_TIME_MIDDLE = 40;
-export const ANSWER_TIME_LONG = 59;
+export const ANSWER_TIME_SHORT_1 = 25;
+export const ANSWER_TIME_SHORT_2 = 30;
+export const ANSWER_TIME_SHORT_3 = 35;
+export const ANSWER_TIME_LONG_1 = 40;
+export const ANSWER_TIME_LONG_2 = 60;
+export const ANSWER_TIME_LONG_3 = 80;

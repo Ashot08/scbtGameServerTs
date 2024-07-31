@@ -15,8 +15,8 @@ import {
   getWorkersOnPositionsCount, getWorkersPositionsFirstIndex, isGamePlayersOrderCorrect,
 } from '../utils/game.ts';
 import {
-  ANSWER_TIME_LONG, ANSWER_TIME_MIDDLE,
-  ANSWER_TIME_SHORT,
+  ANSWER_TIME_LONG_1, ANSWER_TIME_LONG_2, ANSWER_TIME_LONG_3,
+  ANSWER_TIME_SHORT_1, ANSWER_TIME_SHORT_2, ANSWER_TIME_SHORT_3,
   BRIGADIER_QUESTIONS_COUNT,
   MAX_WORKER_DEFENDS_COUNT,
 } from '../constants/constants.ts';
@@ -40,19 +40,27 @@ class GameController {
   async createGame(req: any, res: any) {
     try {
       const validationErrors = validationResult(req);
-      let answerTime = ANSWER_TIME_SHORT;
+      let answerTime = ANSWER_TIME_SHORT_1;
 
       if (!validationErrors.isEmpty()) {
         return res.status(400).json({ message: 'Ошибка при валидации данных', validationErrors });
       }
 
+      if (req.body.answerTime === 30) {
+        answerTime = ANSWER_TIME_SHORT_2;
+      }
+      if (req.body.answerTime === 35) {
+        answerTime = ANSWER_TIME_SHORT_3;
+      }
       if (req.body.answerTime === 40) {
-        answerTime = ANSWER_TIME_MIDDLE;
+        answerTime = ANSWER_TIME_LONG_1;
       }
       if (req.body.answerTime === 60) {
-        answerTime = ANSWER_TIME_LONG;
+        answerTime = ANSWER_TIME_LONG_2;
       }
-
+      if (req.body.answerTime === 80) {
+        answerTime = ANSWER_TIME_LONG_3;
+      }
       const game = {
         ...req.body,
         status: 'created',

@@ -2,6 +2,7 @@ import { validationResult } from 'express-validator';
 import { ISqlite } from 'sqlite';
 import RunResult = ISqlite.RunResult;
 import Question from '../db/models/Question.ts';
+import {getCatChildrenAllDepth, getCatsTree} from '../utils/questionCats.ts';
 
 class QuestionController {
   async createQuestionCat(req: any, res: any) {
@@ -32,7 +33,55 @@ class QuestionController {
     } catch (e) {
       return res.status(400).json({
         status: 'error',
-        message: 'Ошибка, вероятно категория с таким названием уже существует.',
+        message: 'Ошибка, вероятно категория с таким названием или символьным кодом уже существует.',
+        e,
+      });
+    }
+  }
+
+  async updateQuestionCat(req: any, res: any) {
+    try {
+      const validationErrors = validationResult(req);
+
+      if (!validationErrors.isEmpty()) {
+        return res.status(400).json({
+          status: 'error',
+          message: 'Ошибка при валидации данных',
+          validationErrors,
+        });
+      }
+
+      const questionCatData = {
+        ...req.body,
+      };
+
+      const allCats = await Question.getQuestionCats();
+
+      if(questionCatData) {
+        // console.log('children', getCatChildrenAllDepth(questionCatData.id, allCats));
+        getCatChildrenAllDepth(questionCatData.id, allCats)
+        // console.log('children', getCatsTree(allCats));
+        return res.json({
+          status: 'success',
+          message: 'Категория вопроса успешно обновлена',
+          result: getCatsTree(allCats),
+        });
+      }
+
+      const result = { lastID: 0 };
+      // const result: RunResult = await Question.updateQuestionCat(questionCatData);
+
+      if (result.lastID) {
+        return res.json({
+          status: 'success',
+          message: 'Категория вопроса успешно обновлена',
+          result,
+        });
+      }
+    } catch (e) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Ошибка, вероятно категория с таким названием или символьным кодом уже существует.',
         e,
       });
     }

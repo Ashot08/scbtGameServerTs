@@ -15,3 +15,11 @@ export enum AnswerCorrect {
   True = 'true',
   False = 'false',
 }
+
+export type DbQuestionCat = {
+  id: number,
+  title: string,
+  slug: string,
+  parent_id: number,
+  children?: DbQuestionCat[],
+}

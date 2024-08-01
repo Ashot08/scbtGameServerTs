@@ -2,7 +2,7 @@ import { validationResult } from 'express-validator';
 import { ISqlite } from 'sqlite';
 import RunResult = ISqlite.RunResult;
 import Question from '../db/models/Question.ts';
-import {getCatChildrenAllDepth, getCatsTree} from '../utils/questionCats.ts';
+import { getCatChildrenAllDepth, getCatsTree } from '../utils/questionCats.ts';
 
 class QuestionController {
   async createQuestionCat(req: any, res: any) {
@@ -57,9 +57,9 @@ class QuestionController {
 
       const allCats = await Question.getQuestionCats();
 
-      if(questionCatData) {
+      if (questionCatData) {
         // console.log('children', getCatChildrenAllDepth(questionCatData.id, allCats));
-        getCatChildrenAllDepth(questionCatData.id, allCats)
+        getCatChildrenAllDepth(questionCatData.id, allCats);
         // console.log('children', getCatsTree(allCats));
         return res.json({
           status: 'success',
@@ -113,9 +113,9 @@ class QuestionController {
   async getQuestionCats(req: any, res: any) {
     try {
       const cats = await Question.getQuestionCats();
-
+      const catsTree = getCatsTree(cats);
       if (cats) {
-        return res.json({ message: 'Success Get Cats', cats });
+        return res.json({ message: 'Success Get Cats', result: { cats, catsTree } });
       }
       return res.status(200).json({ message: 'Get Cats error' });
     } catch (e) {

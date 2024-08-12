@@ -27,6 +27,7 @@
     "no-prototype-builtins": 0,
     "max-classes-per-file": 1,
     "no-fallthrough": 1,
-    "default-param-last": 1
+    "default-param-last": 1,
+    "camelcase": "warn"
   }
 }

@@ -12,6 +12,13 @@ export interface QuestionCatOptions {
   parentId: number,
 }
 
+export interface UpdateQuestionCatOptions {
+  id?: number,
+  title: string,
+  slug: string,
+  parent_id: number,
+}
+
 export interface QuestionOptions {
   id?: number,
   text: string,
@@ -91,19 +98,19 @@ class Question extends BaseModel {
     );
   }
 
-  async updateQuestionCat(data: QuestionCatOptions) {
+  async updateQuestionCat(data: UpdateQuestionCatOptions) {
     const {
       id,
       title,
       slug,
-      parentId,
+      parent_id,
     } = data;
 
     return db.run(`UPDATE questionCats 
         SET title = ?, 
         slug = ?, 
         parent_id = ? 
-        WHERE id = ?`, title, slug, parentId, id);
+        WHERE id = ?`, title, slug, parent_id, id);
   }
 
   async create(data: QuestionOptions) {

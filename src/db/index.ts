@@ -75,6 +75,7 @@ await db.exec(`
       slug TEXT UNIQUE,
       order_number INTEGER,
       parent_id INTEGER,
+      active TEXT,
       FOREIGN KEY (parent_id) REFERENCES questionCats(id) ON DELETE SET NULL
   );
 `);

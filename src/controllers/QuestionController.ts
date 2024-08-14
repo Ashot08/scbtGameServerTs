@@ -81,6 +81,13 @@ class QuestionController {
       // }
 
       const result: RunResult = await Question.updateQuestionCat(questionCatData);
+
+      if(questionCatData.active === 'false') {
+        for (const cat of catChildrenAllDepthIds) {
+          await Question.updateQuestionCatActive(cat, 'false');
+        }
+      }
+
       if (result.changes) {
         return res.json({
           status: 'success',

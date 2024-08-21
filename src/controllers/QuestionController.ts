@@ -2,7 +2,7 @@ import { validationResult } from 'express-validator';
 import { ISqlite } from 'sqlite';
 import RunResult = ISqlite.RunResult;
 import Question from '../db/models/Question.ts';
-import {getCatChildrenAllDepth, getCatsTree} from '../utils/questionCats.ts';
+import { getCatChildrenAllDepth, getCatsTree } from '../utils/questionCats.ts';
 
 class QuestionController {
   async createQuestionCat(req: any, res: any) {
@@ -20,7 +20,6 @@ class QuestionController {
       const questionCat = {
         ...req.body,
       };
-
       const result: RunResult = await Question.createQuestionCat(questionCat);
 
       if (result.lastID) {
@@ -56,22 +55,40 @@ class QuestionController {
       };
 
       const allCats = await Question.getQuestionCats();
+      const catChildrenAllDepthIds = getCatChildrenAllDepth(questionCatData.id, allCats)
+        .map((cat) => cat.id);
 
-      if(questionCatData) {
-        // console.log('children', getCatChildrenAllDepth(questionCatData.id, allCats));
-        getCatChildrenAllDepth(questionCatData.id, allCats)
-        // console.log('children', getCatsTree(allCats));
-        return res.json({
-          status: 'success',
-          message: 'Категория вопроса успешно обновлена',
-          result: getCatsTree(allCats),
+      if (questionCatData.id === questionCatData.parent_id) {
+        return res.status(400).json({
+          status: 'error',
+          message: 'Ошибка, нельзя сделать категорию родительской для самой себя.',
         });
       }
 
-      const result = { lastID: 0 };
-      // const result: RunResult = await Question.updateQuestionCat(questionCatData);
+      if (catChildrenAllDepthIds.includes(questionCatData.parent_id)) {
+        return res.status(400).json({
+          status: 'error',
+          message: 'Ошибка, нельзя указать в качестве родительской одну из дочерних категорий.',
+        });
+      }
 
-      if (result.lastID) {
+      // if (questionCatData) {
+      //   getCatChildrenAllDepth(questionCatData.id, allCats);
+      //   return res.json({
+      //     status: 'success',
+      //     message: 'Категория вопроса успешно обновлена',
+      //   });
+      // }
+
+      const result: RunResult = await Question.updateQuestionCat(questionCatData);
+
+      if (questionCatData.active === 'false') {
+        for (const cat of catChildrenAllDepthIds) {
+          await Question.updateQuestionCatActive(cat, 'false');
+        }
+      }
+
+      if (result.changes) {
         return res.json({
           status: 'success',
           message: 'Категория вопроса успешно обновлена',
@@ -113,9 +130,9 @@ class QuestionController {
   async getQuestionCats(req: any, res: any) {
     try {
       const cats = await Question.getQuestionCats();
-
+      const catsTree = getCatsTree(cats);
       if (cats) {
-        return res.json({ message: 'Success Get Cats', cats });
+        return res.json({ message: 'Success Get Cats', result: { cats, catsTree } });
       }
       return res.status(200).json({ message: 'Get Cats error' });
     } catch (e) {

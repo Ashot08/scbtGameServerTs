@@ -20,9 +20,12 @@ class AnswerController {
       }
       const lastRoll = rolls.slice(-1)[0];
 
-      let gameQuestionCats = await Question.getQuestionCatsByGameId(gameId);
+      let gameQuestionCats = await Question.getQuestionCatsByGameIdActive(gameId);
 
       let questions: QuestionOptions[] = [];
+      if (!Array.isArray(gameQuestionCats) || !gameQuestionCats.length) {
+        gameQuestionCats = await Question.getQuestionCatsActive();
+      }
       if (!Array.isArray(gameQuestionCats) || !gameQuestionCats.length) {
         gameQuestionCats = [];
       }
@@ -71,8 +74,11 @@ class AnswerController {
         return { status: 'error', message: 'Ошибка создания ответов Brigadier' };
       }
 
-      let gameQuestionCats = await Question.getQuestionCatsByGameId(gameId);
+      let gameQuestionCats = await Question.getQuestionCatsByGameIdActive(gameId);
       let questions: QuestionOptions[] = [];
+      if (!Array.isArray(gameQuestionCats) || !gameQuestionCats.length) {
+        gameQuestionCats = await Question.getQuestionCatsActive();
+      }
       if (!Array.isArray(gameQuestionCats) || !gameQuestionCats.length) {
         gameQuestionCats = [];
       }

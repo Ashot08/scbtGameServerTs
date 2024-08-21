@@ -12,6 +12,14 @@ export interface QuestionCatOptions {
   parentId: number,
 }
 
+export interface UpdateQuestionCatOptions {
+  id?: number,
+  title: string,
+  slug: string,
+  parent_id: number,
+  active: 'true' | 'false',
+}
+
 export interface QuestionOptions {
   id?: number,
   text: string,
@@ -31,6 +39,12 @@ class Question extends BaseModel {
         ORDER BY id ASC`);
   }
 
+  async getQuestionCatsActive() {
+    return db.all(`SELECT * FROM questionCats
+        WHERE active = 'true'
+        ORDER BY id ASC`);
+  }
+
   async getQuestionCatsByGameId(gameId: number) {
     return db.all(
       `SELECT c.id, c.title, c.slug
@@ -38,6 +52,23 @@ class Question extends BaseModel {
         JOIN questionCats as c ON c.id = gc.questionCat_id
         WHERE gc.game_id = ? ORDER BY c.id ASC`,
       gameId,
+    );
+    // return db.all(
+    //   `SELECT c.id, c.title, c.slug
+    //     FROM games_questionsCats as gc
+    //     JOIN questionCats as c ON c.id = gc.questionCat_id
+    //     ORDER BY c.id ASC`,
+    //   gameId,
+    // );
+  }
+
+  async getQuestionCatsByGameIdActive(gameId: number) {
+    return db.all(
+      `SELECT c.id, c.title, c.slug
+        FROM games_questionsCats as gc
+        JOIN questionCats as c ON c.id = gc.questionCat_id
+        WHERE gc.game_id = ? AND c.active = ? ORDER BY c.id ASC`,
+      [gameId, 'true'],
     );
     // return db.all(
     //   `SELECT c.id, c.title, c.slug
@@ -91,19 +122,27 @@ class Question extends BaseModel {
     );
   }
 
-  async updateQuestionCat(data: QuestionCatOptions) {
+  async updateQuestionCat(data: UpdateQuestionCatOptions) {
     const {
       id,
       title,
       slug,
-      parentId,
+      parent_id,
+      active,
     } = data;
 
     return db.run(`UPDATE questionCats 
         SET title = ?, 
         slug = ?, 
-        parent_id = ? 
-        WHERE id = ?`, title, slug, parentId, id);
+        parent_id = ?,
+        active = ? 
+        WHERE id = ?`, title, slug, parent_id, active, id);
+  }
+
+  async updateQuestionCatActive(catId: number, active: 'true' | 'false') {
+    return db.run(`UPDATE questionCats 
+        SET active = ? 
+        WHERE id = ?`, active, catId);
   }
 
   async create(data: QuestionOptions) {

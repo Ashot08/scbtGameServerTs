@@ -23,7 +23,7 @@ export function getCatChildrenAllDepth(catId: number, allCats: DbQuestionCat[]) 
       ];
       children = children.concat(newChildren);
     }
-    if(childrenTemp.length <= 0) {
+    if (childrenTemp.length <= 0) {
       break;
     }
   }
@@ -34,6 +34,6 @@ export function getCatsTree(allCats: DbQuestionCat[]) {
   return createTreeData(allCats);
 }
 function createTreeData(arr: any) {
-  const tree = Object.fromEntries(arr.map((n: any) => [ n.id, { ...n, children: [] } ]));
-  return Object.values(tree).filter(n => !tree[n.parent_id]?.children.push(n));
+  const tree = Object.fromEntries(arr.map((n: any) => [n.id, { ...n, children: [] }]));
+  return Object.values(tree).filter((n) => !tree[n.parent_id]?.children.push(n));
 }

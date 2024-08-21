@@ -28,6 +28,7 @@
     "max-classes-per-file": 1,
     "no-fallthrough": 1,
     "default-param-last": 1,
-    "camelcase": "warn"
+    "camelcase": "warn",
+    "no-await-in-loop": "warn"
   }
 }

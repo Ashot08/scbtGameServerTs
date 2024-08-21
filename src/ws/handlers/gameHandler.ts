@@ -298,6 +298,16 @@ export default (io: any, socket: any) => {
       await GameController.addActiveDefend(socket.roomId, playerState, data.workerIndex);
       await GameController.updatePlayerBrigadierDefendsCount(playerState.player_id, socket.roomId, oldPlayerDefendsCount - 1);
 
+      // const activeDefendsCount = +getActiveDefendsCount(playerState, playerState.active_worker);
+      // const questionsWithoutDefCount = playerState.questions_without_def_count;
+      // const questionsToActivateDefCount = playerState.questions_to_active_def_count;
+      // надо бы уменьшить на 1 количество вопросов "Без защит (без права на ошибку)",
+      // проверить есть ли место для неактивных защит
+
+
+
+
+
       // const playerState = await GameController.getPlayerState(socket.roomId, data.activePlayerId);
       // const activeDefends = getActiveDefendsCount(playerState, playerState.active_worker);
       // const notActiveDefends = getNotActiveDefendsCount(playerState, playerState.active_worker);

@@ -298,25 +298,48 @@ export default (io: any, socket: any) => {
       await GameController.addActiveDefend(socket.roomId, playerState, data.workerIndex);
       await GameController.updatePlayerBrigadierDefendsCount(playerState.player_id, socket.roomId, oldPlayerDefendsCount - 1);
 
-      // const activeDefendsCount = +getActiveDefendsCount(playerState, playerState.active_worker);
-      // const questionsWithoutDefCount = playerState.questions_without_def_count;
-      // const questionsToActivateDefCount = playerState.questions_to_active_def_count;
-      // надо бы уменьшить на 1 количество вопросов "Без защит (без права на ошибку)",
-      // проверить есть ли место для неактивных защит
+      // Если ход игрока
+      if(data.activePlayerId === playerState.player_id) {
+        if(playerState.next_worker_index === data.workerIndex) {
+          const questionsToNextWorkerCount = playerState.questions_to_next_worker_count;
+          await GameController.updateNextWorkerQuestionsCount(
+            socket.roomId,
+            playerState.player_id,
+            questionsToNextWorkerCount - 1,
+          );
+        }
 
+        if (playerState.active_worker === data.workerIndex) {
+          const activeDefendsCount = +getActiveDefendsCount(playerState, playerState.active_worker);
+          const questionsWithoutDefCount = playerState.questions_without_def_count;
+          const questionsToActivateDefCount = playerState.questions_to_active_def_count;
+          // уменьшить на 1 количество вопросов "Без защит (без права на ошибку)",
+          await GameController.updateQuestionsWithoutDef(
+            playerState.player_id,
+            socket.roomId,
+            questionsWithoutDefCount - 1,
+          );
 
+          // если активных защит стало достаточно
+          if ((activeDefendsCount + 1 >= playerState.accident_difficultly)) {
+            await GameController.updateQuestionsToActivateDef(
+              playerState.player_id,
+              socket.roomId,
+              0,
+            );
+            // socket.emit('game:workerSaved', { status: 'Спасен' });
+          }
 
-
-
-      // const playerState = await GameController.getPlayerState(socket.roomId, data.activePlayerId);
-      // const activeDefends = getActiveDefendsCount(playerState, playerState.active_worker);
-      // const notActiveDefends = getNotActiveDefendsCount(playerState, playerState.active_worker);
-      // const nextWorkerIndex = +getNextWorkerIndex(playerState, playerState.active_worker);
-      // const nextWorkerActiveDefends = +getActiveDefendsCount(playerState, nextWorkerIndex);
-      //
-      // if(nextWorkerActiveDefends > 0) {
-      //   await GameController.updateNextWorkerQuestionsCount(socket.roomId, playerState.player_id, 0);
-      // }
+          // уменьшить количество вопросов для неактивных защит, если нужно
+          if (questionsToActivateDefCount + activeDefendsCount + 1 >= 6) {
+            await GameController.updateQuestionsToActivateDef(
+              playerState.player_id,
+              socket.roomId,
+              questionsToActivateDefCount - 1,
+            );
+          }
+        }
+      }
 
       const gameState = await GameController.getState(socket.roomId);
       socket.emit('game:updateState', gameState);

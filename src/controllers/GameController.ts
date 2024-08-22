@@ -725,6 +725,9 @@ class GameController {
     await Game.updatePlayerNextWorkerMode(playerId, gameId, nextWorkerMode);
   }
   async updateNextWorkerQuestionsCount(gameId: number, playerId: number, newQuestionsCount: number){
+    if(newQuestionsCount < 0) {
+      newQuestionsCount = 0;
+    }
     await Game.updateNextWorkerQuestionsCount(playerId, gameId, newQuestionsCount);
   }
 

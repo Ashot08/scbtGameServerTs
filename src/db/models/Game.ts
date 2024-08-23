@@ -159,7 +159,7 @@ class Game extends BaseModel {
   }
 
   async updateStartTime(gameId: number, time: string) {
-    return db.run('UPDATE games SET time = ? WHERE id = ?', time, gameId);
+    return db.run('UPDATE games SET startTime = ? WHERE id = ?', time, gameId);
   }
 
   async updatePlayersCount(count: number, gameId: number) {
@@ -257,14 +257,13 @@ class Game extends BaseModel {
             next_worker_index,
             questions_to_next_worker_count,
             no_more_rolls,
-            brigadier_defends_count,
-            ready_to_start_brigadier_answers 
+            brigadier_defends_count
             ) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
       [gameId, playerId, 6, 0, 10, 0,
         '0,0,0,0,0,0', '0,0,0,0,0,0', '0,0,0,0,0,0',
-        0, 0, 0, 'false', 'false', 0, 0, 'false', 0, 'false',
+        0, 0, 0, 'false', 'false', 0, 0, 'false', 0,
       ],
     );
   }
@@ -353,15 +352,6 @@ class Game extends BaseModel {
   async updatePlayerReadyStatus(userId: number, gameId: number, readyStatus: string) {
     return db.run(
       'UPDATE players_state SET ready = ? WHERE player_id = ? AND game_id = ?',
-      readyStatus,
-      userId,
-      gameId,
-    );
-  }
-
-  async updatePlayerReadyToStartBrigadier(userId: number, gameId: number, readyStatus: string) {
-    return db.run(
-      'UPDATE players_state SET ready_to_start_brigadier_answers = ? WHERE player_id = ? AND game_id = ?',
       readyStatus,
       userId,
       gameId,

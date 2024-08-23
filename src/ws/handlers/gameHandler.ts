@@ -1,4 +1,4 @@
-import Game, { JoinGameOptions } from '../../db/models/Game.ts';
+import Game, {JoinGameOptions} from '../../db/models/Game.ts';
 import GameController, {
   BuyDefendsData,
   ChangeReadyStatusData,
@@ -349,7 +349,6 @@ export default (io: any, socket: any) => {
       const time = Date.now().toString();
       const result = await GameController.updateStartTime(socket.roomId, time);
       if(result.status === 'success') {
-        await GameController.updateBrigadierStage('in_process', socket.roomId);
         const gameState = await GameController.getState(socket.roomId);
         io.to(socket.roomId).emit('game:updateState', gameState);
         io.to(socket.roomId).emit(
@@ -359,6 +358,25 @@ export default (io: any, socket: any) => {
       }
     } catch (e: any) {
       socket.emit('notification', { status: 'error', message: 'updateStartTime Error' });
+    }
+  }
+
+  async function onModeratorEndStartTimer() {
+    try {
+      const gameState = await GameController.getState(socket.roomId);
+      if(gameState.state?.game.brigadier_stage === 'ready') {
+        const result = await GameController.updateBrigadierStage('in_process', socket.roomId);
+        if(result.status === 'success') {
+          const gameState = await GameController.getState(socket.roomId);
+          io.to(socket.roomId).emit('game:updateState', gameState);
+          io.to(socket.roomId).emit(
+            'notification',
+            { status: 'success', message: `Старт!` }
+          );
+        }
+      }
+    } catch (e: any) {
+      socket.emit('notification', { status: 'error', message: 'onModeratorEndStartTimer Error' });
     }
   }
 
@@ -383,4 +401,5 @@ export default (io: any, socket: any) => {
   socket.on('game:add_defend_from_brigadier', addDefendsFromBrigadier);
   socket.on('game:update_players_order', updatePlayersOrder);
   socket.on('game:moderator_click_start_brigadier_section', onModeratorClickStartBrigadierSection);
+  socket.on('game:moderator_end_start_timer', onModeratorEndStartTimer);
 };

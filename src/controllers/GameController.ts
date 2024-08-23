@@ -516,17 +516,6 @@ class GameController {
     return { status: 'error', message: 'updatePlayerReadyStatus' };
   }
 
-  async updatePlayerReadyToStartBrigadier(gameId: number, data: ChangeReadyStatusData) {
-    const userId = data.userId;
-    const readyStatus = data.readyStatus ? 'true' : 'false';
-    const result = await Game.updatePlayerReadyToStartBrigadier(userId, gameId, readyStatus);
-
-    if (result.changes) {
-      return { status: 'success', message: 'updatePlayerReadyStatus' };
-    }
-    return { status: 'error', message: 'updatePlayerReadyStatus' };
-  }
-
   async updatePlayerBrigadierDefendsCount(userId: number, gameId: number, newDefendsCount: number) {
     try {
       const result = await Game.updatePlayerBrigadierDefendsCount(userId, gameId, newDefendsCount);

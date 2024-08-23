@@ -136,8 +136,7 @@ await db.exec(`
       questions_without_def_count INTEGER,  
       questions_to_next_worker_count INTEGER,  
       no_more_rolls TEXT,  
-      brigadier_defends_count INTEGER,  
-      ready_to_start_brigadier_answers TEXT,  
+      brigadier_defends_count INTEGER,   
       FOREIGN KEY (game_id) REFERENCES games (id) ON UPDATE CASCADE ON DELETE CASCADE, 
       FOREIGN KEY (player_id) REFERENCES players (id) ON UPDATE CASCADE ON DELETE CASCADE 
   );

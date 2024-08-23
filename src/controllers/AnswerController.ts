@@ -37,9 +37,9 @@ class AnswerController {
 
       const questionNumber = getQuestionNumber(questions, answers);
       let result = null;
+      const startTime = Date.now();
       for (const player of players) {
         const isActivePlayerQuestion: 'true' | 'false' = (player.id === lastTurn.player_id) ? 'true' : 'false';
-
         // eslint-disable-next-line no-await-in-loop
         result = await Answer.create({
           turnId: lastTurn.id,
@@ -49,7 +49,7 @@ class AnswerController {
           questionId: questionNumber,
           isActivePlayerQuestion,
           status: 'in_process',
-          startTime: Date.now(),
+          startTime,
           endTime: 0,
         });
       }
@@ -88,7 +88,7 @@ class AnswerController {
       }
       const questionNumber = getQuestionNumber(questions, answers);
       let result = null;
-
+      const startTime = Date.now();
       for (const player of players) {
         const isActivePlayerQuestion: 'true' | 'false' = 'true';
 
@@ -101,7 +101,7 @@ class AnswerController {
           questionId: questionNumber,
           isActivePlayerQuestion,
           status: 'in_process',
-          startTime: Date.now(),
+          startTime,
           endTime: 0,
         });
       }

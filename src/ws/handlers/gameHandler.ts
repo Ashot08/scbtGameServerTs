@@ -10,7 +10,7 @@ import {
   getAccidentDifficultlyByPrizeNumber,
   getActiveDefendsCount, getNextWorkerIndex,
   getNotActiveDefendsCount, getWorkersOnPositionsCount,
-  isAllPlayersReady, isAllPlayersReadyToStartBrigadier,
+  isAllPlayersReady,
 } from '../../utils/game.ts';
 
 export default (io: any, socket: any) => {
@@ -218,26 +218,6 @@ export default (io: any, socket: any) => {
     }
   }
 
-  async function changeReadyToStartBrigadier(data: ChangeReadyStatusData) {
-    try {
-      const result = await GameController.updatePlayerReadyToStartBrigadier(socket.roomId, data);
-      if (result.status === 'success') {
-        const playersState = await GameController.getPlayersStateByGameId(socket.roomId);
-
-        const allPlayersReady = isAllPlayersReadyToStartBrigadier(playersState);
-
-        if (allPlayersReady) {
-          await GameController.updateBrigadierStage('in_process', socket.roomId, );
-        }
-
-        const gameState = await GameController.getState(socket.roomId);
-        io.to(socket.roomId).emit('game:updateState', gameState);
-      }
-    } catch (e) {
-      socket.emit('notification', { status: 'error', message: 'changeReadyToStartBrigadierStatus Error' });
-    }
-  }
-
   async function goNextWorker(data: any) {
     try {
       const playerState = await GameController.getPlayerState(socket.roomId, data.activePlayerId);
@@ -364,6 +344,24 @@ export default (io: any, socket: any) => {
     }
   }
 
+  async function onModeratorClickStartBrigadierSection() {
+    try {
+      const time = Date.now().toString();
+      const result = await GameController.updateStartTime(socket.roomId, time);
+      if(result.status === 'success') {
+        await GameController.updateBrigadierStage('in_process', socket.roomId);
+        const gameState = await GameController.getState(socket.roomId);
+        io.to(socket.roomId).emit('game:updateState', gameState);
+        io.to(socket.roomId).emit(
+          'notification',
+          { status: 'success', message: `Старт!` }
+        );
+      }
+    } catch (e: any) {
+      socket.emit('notification', { status: 'error', message: 'updateStartTime Error' });
+    }
+  }
+
   function sendChatNotification(data: any){
     io.to(socket.roomId).emit(
       'notification',
@@ -382,7 +380,7 @@ export default (io: any, socket: any) => {
   socket.on('game:go_next_worker', goNextWorker);
   socket.on('game:delete_player', deletePlayer);
   socket.on('game:moderator_notification', sendChatNotification);
-  socket.on('game:change_ready_to_start_brigadier', changeReadyToStartBrigadier);
   socket.on('game:add_defend_from_brigadier', addDefendsFromBrigadier);
   socket.on('game:update_players_order', updatePlayersOrder);
+  socket.on('game:moderator_click_start_brigadier_section', onModeratorClickStartBrigadierSection);
 };

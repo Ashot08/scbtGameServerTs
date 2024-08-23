@@ -44,7 +44,8 @@ await db.exec(`
       shift_change_mode TEXT,
       show_roll_result_mode TEXT,
       answer_time INTEGER,
-      players_order TEXT
+      players_order TEXT,
+      startTime TEXT
   );
 `);
 

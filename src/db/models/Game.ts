@@ -19,6 +19,7 @@ export interface CreateGameData {
   brigadierQuestionsCount: number,
   answerTime: number,
   playersOrder: string,
+  startTime: string,
 }
 export interface GameReadOptions {
   id?: number,
@@ -47,6 +48,7 @@ class Game extends BaseModel {
       brigadierQuestionsCount,
       answerTime,
       playersOrder,
+      startTime,
     } = data;
 
     return db.run(
@@ -62,8 +64,8 @@ class Game extends BaseModel {
             shift_change_mode, 
             show_roll_result_mode, 
             brigadier_mode, brigadier_stage, brigadier_questions_count, answer_time,
-            players_order) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            players_order, startTime) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
       [
         title,
@@ -74,7 +76,8 @@ class Game extends BaseModel {
         moderatorMode,
         answersMode,
         shiftChangeMode,
-        showRollResultMode, brigadierMode, brigadierStage, brigadierQuestionsCount, answerTime, playersOrder],
+        showRollResultMode,
+        brigadierMode, brigadierStage, brigadierQuestionsCount, answerTime, playersOrder, startTime],
     );
   }
 
@@ -153,6 +156,10 @@ class Game extends BaseModel {
 
   async updateStatus(status: GameStatus, gameId: number) {
     return db.run('UPDATE games SET status = ? WHERE id = ?', status, gameId);
+  }
+
+  async updateStartTime(gameId: number, time: string) {
+    return db.run('UPDATE games SET time = ? WHERE id = ?', time, gameId);
   }
 
   async updatePlayersCount(count: number, gameId: number) {

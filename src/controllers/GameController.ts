@@ -72,6 +72,7 @@ class GameController {
         brigadierQuestionsCount: BRIGADIER_QUESTIONS_COUNT,
         answerTime,
         playersOrder: '',
+        startTime: '',
       };
 
       const result: RunResult = await Game.create(game);
@@ -204,6 +205,15 @@ class GameController {
       return { status: 'success', message: 'deleteAllTurns success' };
     } catch (e) {
       return { status: 'error', message: 'deleteAllTurns controller error' };
+    }
+  }
+
+  async updateStartTime(gameId: number, time: string) {
+    try {
+      await Game.updateStartTime(gameId, time);
+      return { status: 'success', message: 'updateStartTime success' };
+    } catch (e) {
+      return { status: 'error', message: 'updateStartTime controller error' };
     }
   }
 

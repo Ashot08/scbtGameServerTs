@@ -1,4 +1,4 @@
-import Game, {JoinGameOptions} from '../../db/models/Game.ts';
+import Game, { JoinGameOptions } from '../../db/models/Game.ts';
 import GameController, {
   BuyDefendsData,
   ChangeReadyStatusData,

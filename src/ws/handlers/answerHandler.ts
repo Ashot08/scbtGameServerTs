@@ -22,9 +22,7 @@ export default (io: any, socket: any) => {
   }
 
   async function startBrigadierAnswers() {
-    console.log('brigadier');
     try {
-      console.log('brigadier 1');
       const questionsCount = await GameController.getBrigadierQuestionsCount(socket.roomId);
       if (questionsCount > 0) {
         await GameController.updateBrigadierQuestionsCount(questionsCount - 1, socket.roomId);
@@ -211,6 +209,12 @@ export default (io: any, socket: any) => {
       }
       gameState = await GameController.getState(socket.roomId);
       io.to(socket.roomId).emit('game:updateState', gameState);
+      // if (gameState.state?.answers.length && (gameState.state?.answers.find((a) => a.status === 'in_process') === undefined)) {
+      //   setTimeout(async () => {
+      //     await startBrigadierAnswers();
+      //     console.log('create b answers');
+      //   }, 2000);
+      // }
     } catch (e) {
       socket.emit('notification', { status: 'error', message: 'Update Answers error' });
     }

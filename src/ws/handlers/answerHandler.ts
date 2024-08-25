@@ -86,7 +86,7 @@ export default (io: any, socket: any) => {
         throw new Error('Update Answers error 2');
       }
 
-      socket.emit('notification', { status: 'error', message: isAnswerCorrect === AnswerCorrect.True ? 'Верно' : 'Вы ошиблись' });
+      // socket.emit('notification', { status: 'error', message: isAnswerCorrect === AnswerCorrect.True ? 'Верно' : 'Вы ошиблись' });
 
       const gameState = await GameController.getState(socket.roomId);
 
@@ -207,14 +207,16 @@ export default (io: any, socket: any) => {
           await GameController.updatePlayerBrigadierDefendsCount(answer.player_id, socket.roomId, oldPlayerDefendsCount + 1);
         }
       }
-      gameState = await GameController.getState(socket.roomId);
-      io.to(socket.roomId).emit('game:updateState', gameState);
-      // if (gameState.state?.answers.length && (gameState.state?.answers.find((a) => a.status === 'in_process') === undefined)) {
+
+      // if ((gameState.state?.answers.filter((a) => a.status === 'in_process').length === 1)) {
       //   setTimeout(async () => {
       //     await startBrigadierAnswers();
-      //     console.log('create b answers');
+      //     console.log('create b answers z');
       //   }, 2000);
       // }
+
+      gameState = await GameController.getState(socket.roomId);
+      io.to(socket.roomId).emit('game:updateState', gameState);
     } catch (e) {
       socket.emit('notification', { status: 'error', message: 'Update Answers error' });
     }

@@ -23,20 +23,21 @@ export default (io: any, socket: any) => {
 
   async function startBrigadierAnswers() {
     try {
+      const gameState = await GameController.getState(socket.roomId);
       const questionsCount = await GameController.getBrigadierQuestionsCount(socket.roomId);
-      if (questionsCount > 0) {
-        await GameController.updateBrigadierQuestionsCount(questionsCount - 1, socket.roomId);
+      const isSomePlayersStillInProcess = gameState.state?.answers.some((a) => a.status === 'in_process');
 
+      if (questionsCount > 0 && !isSomePlayersStillInProcess) {
+        await GameController.updateBrigadierQuestionsCount(questionsCount - 1, socket.roomId);
         await AnswerController.updateExpiredAnswerEndTime(socket.roomId);
         await AnswerController.updateExpiredAnswerStatus('error', socket.roomId);
         const result = await AnswerController.createBrigadierAnswers(socket.roomId);
         if (!result) throw new Error('createBrigadierAnswers error');
         const gameState = await GameController.getState(socket.roomId);
         io.to(socket.roomId).emit('game:updateState', gameState);
+        console.log(`was ${questionsCount}`);
       }
-      console.log('brigadier 2');
     } catch (e) {
-      console.log('brigadier 3');
       socket.emit('notification', { status: 'error', message: 'createBrigadierAnswers error' });
     }
   }

@@ -10,7 +10,7 @@ import {
   getAccidentDifficultlyByPrizeNumber,
   getActiveDefendsCount, getNextWorkerIndex,
   getNotActiveDefendsCount, getWorkersOnPositionsCount,
-  isAllPlayersReady, isAllPlayersReadyToStartBrigadier,
+  isAllPlayersReady,
 } from '../../utils/game.ts';
 
 export default (io: any, socket: any) => {
@@ -218,26 +218,6 @@ export default (io: any, socket: any) => {
     }
   }
 
-  async function changeReadyToStartBrigadier(data: ChangeReadyStatusData) {
-    try {
-      const result = await GameController.updatePlayerReadyToStartBrigadier(socket.roomId, data);
-      if (result.status === 'success') {
-        const playersState = await GameController.getPlayersStateByGameId(socket.roomId);
-
-        const allPlayersReady = isAllPlayersReadyToStartBrigadier(playersState);
-
-        if (allPlayersReady) {
-          await GameController.updateBrigadierStage('in_process', socket.roomId, );
-        }
-
-        const gameState = await GameController.getState(socket.roomId);
-        io.to(socket.roomId).emit('game:updateState', gameState);
-      }
-    } catch (e) {
-      socket.emit('notification', { status: 'error', message: 'changeReadyToStartBrigadierStatus Error' });
-    }
-  }
-
   async function goNextWorker(data: any) {
     try {
       const playerState = await GameController.getPlayerState(socket.roomId, data.activePlayerId);
@@ -298,25 +278,48 @@ export default (io: any, socket: any) => {
       await GameController.addActiveDefend(socket.roomId, playerState, data.workerIndex);
       await GameController.updatePlayerBrigadierDefendsCount(playerState.player_id, socket.roomId, oldPlayerDefendsCount - 1);
 
-      // const activeDefendsCount = +getActiveDefendsCount(playerState, playerState.active_worker);
-      // const questionsWithoutDefCount = playerState.questions_without_def_count;
-      // const questionsToActivateDefCount = playerState.questions_to_active_def_count;
-      // надо бы уменьшить на 1 количество вопросов "Без защит (без права на ошибку)",
-      // проверить есть ли место для неактивных защит
+      // Если ход игрока
+      if(data.activePlayerId === playerState.player_id) {
+        if(playerState.next_worker_index === data.workerIndex) {
+          const questionsToNextWorkerCount = playerState.questions_to_next_worker_count;
+          await GameController.updateNextWorkerQuestionsCount(
+            socket.roomId,
+            playerState.player_id,
+            questionsToNextWorkerCount - 1,
+          );
+        }
 
+        if (playerState.active_worker === data.workerIndex) {
+          const activeDefendsCount = +getActiveDefendsCount(playerState, playerState.active_worker);
+          const questionsWithoutDefCount = playerState.questions_without_def_count;
+          const questionsToActivateDefCount = playerState.questions_to_active_def_count;
+          // уменьшить на 1 количество вопросов "Без защит (без права на ошибку)",
+          await GameController.updateQuestionsWithoutDef(
+            playerState.player_id,
+            socket.roomId,
+            questionsWithoutDefCount - 1,
+          );
 
+          // если активных защит стало достаточно
+          if ((activeDefendsCount + 1 >= playerState.accident_difficultly)) {
+            await GameController.updateQuestionsToActivateDef(
+              playerState.player_id,
+              socket.roomId,
+              0,
+            );
+            // socket.emit('game:workerSaved', { status: 'Спасен' });
+          }
 
-
-
-      // const playerState = await GameController.getPlayerState(socket.roomId, data.activePlayerId);
-      // const activeDefends = getActiveDefendsCount(playerState, playerState.active_worker);
-      // const notActiveDefends = getNotActiveDefendsCount(playerState, playerState.active_worker);
-      // const nextWorkerIndex = +getNextWorkerIndex(playerState, playerState.active_worker);
-      // const nextWorkerActiveDefends = +getActiveDefendsCount(playerState, nextWorkerIndex);
-      //
-      // if(nextWorkerActiveDefends > 0) {
-      //   await GameController.updateNextWorkerQuestionsCount(socket.roomId, playerState.player_id, 0);
-      // }
+          // уменьшить количество вопросов для неактивных защит, если нужно
+          if (questionsToActivateDefCount + activeDefendsCount + 1 >= 6) {
+            await GameController.updateQuestionsToActivateDef(
+              playerState.player_id,
+              socket.roomId,
+              questionsToActivateDefCount - 1,
+            );
+          }
+        }
+      }
 
       const gameState = await GameController.getState(socket.roomId);
       socket.emit('game:updateState', gameState);
@@ -341,6 +344,42 @@ export default (io: any, socket: any) => {
     }
   }
 
+  async function onModeratorClickStartBrigadierSection() {
+    try {
+      const time = Date.now().toString();
+      const result = await GameController.updateStartTime(socket.roomId, time);
+      if(result.status === 'success') {
+        const gameState = await GameController.getState(socket.roomId);
+        io.to(socket.roomId).emit('game:updateState', gameState);
+        io.to(socket.roomId).emit(
+          'notification',
+          { status: 'success', message: `Старт!` }
+        );
+      }
+    } catch (e: any) {
+      socket.emit('notification', { status: 'error', message: 'updateStartTime Error' });
+    }
+  }
+
+  async function onModeratorEndStartTimer() {
+    try {
+      const gameState = await GameController.getState(socket.roomId);
+      if(gameState.state?.game.brigadier_stage === 'ready') {
+        const result = await GameController.updateBrigadierStage('in_process', socket.roomId);
+        if(result.status === 'success') {
+          const gameState = await GameController.getState(socket.roomId);
+          io.to(socket.roomId).emit('game:updateState', gameState);
+          io.to(socket.roomId).emit(
+            'notification',
+            { status: 'success', message: `Старт!` }
+          );
+        }
+      }
+    } catch (e: any) {
+      socket.emit('notification', { status: 'error', message: 'onModeratorEndStartTimer Error' });
+    }
+  }
+
   function sendChatNotification(data: any){
     io.to(socket.roomId).emit(
       'notification',
@@ -359,7 +398,8 @@ export default (io: any, socket: any) => {
   socket.on('game:go_next_worker', goNextWorker);
   socket.on('game:delete_player', deletePlayer);
   socket.on('game:moderator_notification', sendChatNotification);
-  socket.on('game:change_ready_to_start_brigadier', changeReadyToStartBrigadier);
   socket.on('game:add_defend_from_brigadier', addDefendsFromBrigadier);
   socket.on('game:update_players_order', updatePlayersOrder);
+  socket.on('game:moderator_click_start_brigadier_section', onModeratorClickStartBrigadierSection);
+  socket.on('game:moderator_end_start_timer', onModeratorEndStartTimer);
 };

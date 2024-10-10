@@ -72,6 +72,7 @@ class GameController {
         brigadierQuestionsCount: BRIGADIER_QUESTIONS_COUNT,
         answerTime,
         playersOrder: '',
+        startTime: '',
       };
 
       const result: RunResult = await Game.create(game);
@@ -204,6 +205,15 @@ class GameController {
       return { status: 'success', message: 'deleteAllTurns success' };
     } catch (e) {
       return { status: 'error', message: 'deleteAllTurns controller error' };
+    }
+  }
+
+  async updateStartTime(gameId: number, time: string) {
+    try {
+      await Game.updateStartTime(gameId, time);
+      return { status: 'success', message: 'updateStartTime success' };
+    } catch (e) {
+      return { status: 'error', message: 'updateStartTime controller error' };
     }
   }
 
@@ -506,17 +516,6 @@ class GameController {
     return { status: 'error', message: 'updatePlayerReadyStatus' };
   }
 
-  async updatePlayerReadyToStartBrigadier(gameId: number, data: ChangeReadyStatusData) {
-    const userId = data.userId;
-    const readyStatus = data.readyStatus ? 'true' : 'false';
-    const result = await Game.updatePlayerReadyToStartBrigadier(userId, gameId, readyStatus);
-
-    if (result.changes) {
-      return { status: 'success', message: 'updatePlayerReadyStatus' };
-    }
-    return { status: 'error', message: 'updatePlayerReadyStatus' };
-  }
-
   async updatePlayerBrigadierDefendsCount(userId: number, gameId: number, newDefendsCount: number) {
     try {
       const result = await Game.updatePlayerBrigadierDefendsCount(userId, gameId, newDefendsCount);
@@ -725,6 +724,9 @@ class GameController {
     await Game.updatePlayerNextWorkerMode(playerId, gameId, nextWorkerMode);
   }
   async updateNextWorkerQuestionsCount(gameId: number, playerId: number, newQuestionsCount: number){
+    if(newQuestionsCount < 0) {
+      newQuestionsCount = 0;
+    }
     await Game.updateNextWorkerQuestionsCount(playerId, gameId, newQuestionsCount);
   }
 

@@ -22,23 +22,22 @@ export default (io: any, socket: any) => {
   }
 
   async function startBrigadierAnswers() {
-    console.log('brigadier');
     try {
-      console.log('brigadier 1');
+      const gameState = await GameController.getState(socket.roomId);
       const questionsCount = await GameController.getBrigadierQuestionsCount(socket.roomId);
-      if (questionsCount > 0) {
-        await GameController.updateBrigadierQuestionsCount(questionsCount - 1, socket.roomId);
+      const isSomePlayersStillInProcess = gameState.state?.answers.some((a) => a.status === 'in_process');
 
+      if (questionsCount > 0 && !isSomePlayersStillInProcess) {
+        await GameController.updateBrigadierQuestionsCount(questionsCount - 1, socket.roomId);
         await AnswerController.updateExpiredAnswerEndTime(socket.roomId);
         await AnswerController.updateExpiredAnswerStatus('error', socket.roomId);
         const result = await AnswerController.createBrigadierAnswers(socket.roomId);
         if (!result) throw new Error('createBrigadierAnswers error');
         const gameState = await GameController.getState(socket.roomId);
         io.to(socket.roomId).emit('game:updateState', gameState);
+        console.log(`was ${questionsCount}`);
       }
-      console.log('brigadier 2');
     } catch (e) {
-      console.log('brigadier 3');
       socket.emit('notification', { status: 'error', message: 'createBrigadierAnswers error' });
     }
   }
@@ -88,7 +87,7 @@ export default (io: any, socket: any) => {
         throw new Error('Update Answers error 2');
       }
 
-      socket.emit('notification', { status: 'error', message: isAnswerCorrect === AnswerCorrect.True ? 'Верно' : 'Вы ошиблись' });
+      // socket.emit('notification', { status: 'error', message: isAnswerCorrect === AnswerCorrect.True ? 'Верно' : 'Вы ошиблись' });
 
       const gameState = await GameController.getState(socket.roomId);
 
@@ -209,6 +208,14 @@ export default (io: any, socket: any) => {
           await GameController.updatePlayerBrigadierDefendsCount(answer.player_id, socket.roomId, oldPlayerDefendsCount + 1);
         }
       }
+
+      // if ((gameState.state?.answers.filter((a) => a.status === 'in_process').length === 1)) {
+      //   setTimeout(async () => {
+      //     await startBrigadierAnswers();
+      //     console.log('create b answers z');
+      //   }, 2000);
+      // }
+
       gameState = await GameController.getState(socket.roomId);
       io.to(socket.roomId).emit('game:updateState', gameState);
     } catch (e) {

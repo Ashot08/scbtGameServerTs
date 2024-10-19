@@ -1,8 +1,11 @@
+import { ISqlite } from 'sqlite';
+import { validationResult } from 'express-validator';
 import Game from '../db/models/Game.ts';
 import Answer from '../db/models/Answer.ts';
 import { getQuestionNumber } from '../utils/getQuestionNumber.ts';
 import Question, { QuestionOptions } from '../db/models/Question.ts';
 import { AnswerCorrect } from '../typings/types.ts';
+import RunResult = ISqlite.RunResult;
 
 class AnswerController {
   async createAnswers(gameId: number) {
@@ -182,6 +185,64 @@ class AnswerController {
       return { status: 'error', message: 'Ошибка при обновлении ExpiredAnswerEndTime' };
     } catch (e) {
       return { status: 'error', message: 'Ошибка при обновлении ExpiredAnswerEndTime' };
+    }
+  }
+
+  async createTempAnswer(req: any, res: any) {
+    try {
+      const validationErrors = validationResult(req);
+      if (!validationErrors.isEmpty()) {
+        return res.status(400).json({
+          status: 'error',
+          message: 'Ошибка при валидации данных createTempAnswer',
+          validationErrors,
+        });
+      }
+
+      const answer = {
+        ...req.body,
+        timestamp: Date.now(),
+      };
+
+      const result: RunResult = await Answer.createTempAnswer(answer);
+      if (result.lastID) {
+        return res.json({ status: 'success', message: 'Временный ответ успешно создан', result });
+      }
+    } catch (e) {
+      console.log(e);
+      return res.json({ status: 'error', message: 'createTempAnswer Error' });
+    }
+  }
+
+  async getTempAnswersByGameId(req: any, res: any) {
+    try {
+      const { gameId } = req.query;
+      const answers = await Answer.getTempAnswers(gameId);
+      return res.status(200).json({
+        answers,
+        status: 'success',
+        message: 'getTempAnswersByGameId success',
+      });
+    } catch (e) {
+      return res.json({ status: 'error', message: 'getTempAnswersByGameId Error' });
+    }
+  }
+
+  async checkTempAnswersAndWriteAnswers(gameId: number) {
+    try {
+      const answersInProcess = await Answer.getAnswersInProcess(gameId);
+      if(Array.isArray(answersInProcess)) {
+        const tempAnswers = await Answer.getTempAnswers(gameId);
+        for (const answer of answersInProcess) {
+          const tempAnswer = tempAnswers
+            .filter((a) => a.answer_id === answer.id)
+            .slice(-1)[0];
+          await this.checkCorrectAndUpdateAnswer(tempAnswer.variant_id, answer.id);
+        }
+      }
+      return { status: 'success', message: 'checkTempAnswersAndWriteAnswers Success' };
+    } catch (e) {
+      return { status: 'error', message: 'getTempAnswersByGameId Error' };
     }
   }
 }

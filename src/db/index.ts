@@ -117,6 +117,19 @@ await db.exec(`
 `);
 
 await db.exec(`
+  CREATE TABLE IF NOT EXISTS temp_answers (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      answer_id INTEGER,
+      game_id INTEGER,
+      player_id INTEGER,
+      question_id INTEGER,
+      variant_id INTEGER,
+      timestamp number,
+      FOREIGN KEY (game_id) REFERENCES games (id) ON UPDATE CASCADE ON DELETE CASCADE 
+  );
+`);
+
+await db.exec(`
   CREATE TABLE IF NOT EXISTS players_state (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       player_id INTEGER,

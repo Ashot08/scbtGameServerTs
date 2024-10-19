@@ -7,6 +7,7 @@ import { AnswerCorrect } from '../../typings/types.ts';
 export default (io: any, socket: any) => {
   async function startAnswers() {
     try {
+      await AnswerController.checkTempAnswersAndWriteAnswers(socket.roomId);
       await AnswerController.updateExpiredAnswerEndTime(socket.roomId);
       await AnswerController.updateExpiredAnswerStatus('error', socket.roomId);
 
@@ -15,7 +16,6 @@ export default (io: any, socket: any) => {
       await GameController.updateAnswersMode('true', socket.roomId);
       const gameState = await GameController.getState(socket.roomId);
       io.to(socket.roomId).emit('game:updateState', gameState);
-      console.log('STARTED ANSWERS');
     } catch (e) {
       socket.emit('notification', { status: 'error', message: 'Create Answers error' });
     }
@@ -58,10 +58,10 @@ export default (io: any, socket: any) => {
 
   async function stopAnswers() {
     try {
+      await AnswerController.checkTempAnswersAndWriteAnswers(socket.roomId);
       await AnswerController.updateExpiredAnswerEndTime(socket.roomId);
       const result = await AnswerController.updateExpiredAnswerStatus('error', socket.roomId);
       if (!result) throw new Error('updateExpiredAnswerStatus error');
-      // await GameController.updateShowRollResultMode(socket.roomId, 'false');
       await GameController.updateAnswersMode('false', socket.roomId);
 
       const gameState = await GameController.getState(socket.roomId);

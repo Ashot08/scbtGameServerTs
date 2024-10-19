@@ -18,6 +18,16 @@ export interface AnswerOptions {
   startTime: number,
   endTime: number,
 }
+
+export interface TempAnswerOptions {
+  answerId: number,
+  gameId: number,
+  playerId: number,
+  questionId: number,
+  variantId: number,
+  timestamp: number,
+}
+
 class Answer extends BaseModel {
   async read(options: AnswerReadOptions) {
     if (options.hasOwnProperty('id')) {
@@ -49,6 +59,24 @@ class Answer extends BaseModel {
     );
   }
 
+  async createTempAnswer(options: TempAnswerOptions): Promise<RunResult> {
+    const {
+      answerId,
+      gameId,
+      playerId,
+      questionId,
+      variantId,
+      timestamp,
+    } = options;
+    return db.run(
+      `INSERT INTO 
+            temp_answers (answer_id, game_id, player_id, question_id, variant_id, timestamp) 
+            VALUES (?, ?, ?, ?, ?, ?)
+      `,
+      [answerId, gameId, playerId, questionId, variantId, timestamp],
+    );
+  }
+
   async updateAnswerStatus(status: 'error' | 'success' | 'in_process', answerId: number) {
     return db.run(`UPDATE answers SET status = ? 
         WHERE id = ?`, status, answerId);
@@ -73,6 +101,19 @@ class Answer extends BaseModel {
 
   async getAnswers(gameId: number) {
     return db.all(`SELECT * FROM answers 
+        WHERE game_id = ? 
+        ORDER BY id ASC`, gameId);
+  }
+
+  async getAnswersInProcess(gameId: number) {
+    return db.all(`SELECT * FROM answers 
+        WHERE game_id = ? 
+        AND status = 'in_process'
+        ORDER BY id ASC`, gameId);
+  }
+
+  async getTempAnswers(gameId: number) {
+    return db.all(`SELECT * FROM temp_answers 
         WHERE game_id = ? 
         ORDER BY id ASC`, gameId);
   }

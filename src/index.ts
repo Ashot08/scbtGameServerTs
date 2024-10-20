@@ -14,6 +14,7 @@ import answerHandler from './ws/handlers/answerHandler.ts';
 import { questionRouter } from './routes/questionRouter.ts';
 import { fileUploadRouter } from './routes/fileUploadRouter.ts';
 import { answerRouter } from './routes/answerRouter.ts';
+import {shootoutRouter} from "./routes/shootoutRouter.ts";
 
 // import answersString from './handleAnswers.ts';
 
@@ -37,6 +38,7 @@ app.use('/auth', authRouter);
 app.use('/game', gameRouter);
 app.use('/question', questionRouter);
 app.use('/answer', answerRouter);
+app.use('/shootout', shootoutRouter);
 app.use('/file', fileUploadRouter);
 
 const __filename = fileURLToPath(import.meta.url);

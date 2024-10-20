@@ -77,7 +77,8 @@ export default (io: any, socket: any) => {
   async function updateAnswer(data: {variantId: number, answerId: number }) {
     try {
       await AnswerController.updateExpiredAnswerEndTime(socket.roomId);
-      const result = await AnswerController.checkCorrectAndUpdateAnswer(data.variantId, data.answerId);
+      // const result = await AnswerController.checkCorrectAndUpdateAnswer(data.variantId, data.answerId);
+      const result = await AnswerController.checkCorrectAndUpdateAnswerByAnswerId(data.answerId, socket.roomId);
 
       if (!(result?.status === 'success')) {
         throw new Error('Update Answers error 1');
@@ -177,12 +178,13 @@ export default (io: any, socket: any) => {
 
         const gameState = await GameController.getState(socket.roomId);
         io.to(socket.roomId).emit('game:updateState', gameState);
-        io.to(socket.roomId).emit('answer:startTimer');
+        // io.to(socket.roomId).emit('answer:startTimer');
       } else {
         const gameState = await GameController.getState(socket.roomId);
         socket.emit('game:updateState', gameState);
       }
     } catch (e) {
+      console.log(e);
       socket.emit('notification', { status: 'error', message: 'updateAnswer error 23' });
     }
   }

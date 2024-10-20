@@ -130,6 +130,19 @@ await db.exec(`
 `);
 
 await db.exec(`
+  CREATE TABLE IF NOT EXISTS watcher_answers (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      game_id INTEGER,
+      player_id INTEGER,
+      question_id INTEGER,
+      variant_id INTEGER,
+      status TEXT,
+      timestamp number,
+      FOREIGN KEY (game_id) REFERENCES games (id) ON UPDATE CASCADE ON DELETE CASCADE 
+  );
+`);
+
+await db.exec(`
   CREATE TABLE IF NOT EXISTS players_state (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       player_id INTEGER,
@@ -177,10 +190,33 @@ await db.exec(`
 await db.exec(`
   CREATE TABLE IF NOT EXISTS questions_questionCats (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      question_id INTEGER ,
-      questionCat_id INTEGER ,
+      question_id INTEGER,
+      questionCat_id INTEGER,
       FOREIGN KEY (question_id) REFERENCES questions (id) ON UPDATE CASCADE ON DELETE CASCADE  
       FOREIGN KEY (questionCat_id) REFERENCES questionCats (id) ON UPDATE CASCADE ON DELETE CASCADE  
+  );
+`);
+
+await db.exec(`
+  CREATE TABLE IF NOT EXISTS shootout (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      status TEXT,
+      game_id INTEGER,
+      question_id INTEGER,
+      level INTEGER,
+      players TEXT,
+      FOREIGN KEY (game_id) REFERENCES games (id) ON UPDATE CASCADE ON DELETE CASCADE
+  );
+`);
+
+await db.exec(`
+  CREATE TABLE IF NOT EXISTS shootout_players_answers (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      shootout_id INTEGER,
+      player_id INTEGER,
+      answers_count INTEGER,
+      success_answers INTEGER,
+      FOREIGN KEY (shootout_id) REFERENCES shootout (id) ON UPDATE CASCADE ON DELETE CASCADE
   );
 `);
 

@@ -7,6 +7,12 @@ export interface AnswerReadOptions {
   id?: number,
 }
 
+export interface WatcherAnswerReadOptions {
+  gameId?: number,
+  questionId?: number,
+  playerId?: number,
+}
+
 export interface AnswerOptions {
   turnId: number,
   gameId: number,
@@ -28,10 +34,34 @@ export interface TempAnswerOptions {
   timestamp: number,
 }
 
+export interface WatcherAnswerOptions {
+  gameId: number,
+  playerId: number,
+  questionId: number,
+  variantId: number,
+  status: string,
+  timestamp: number,
+}
+
 class Answer extends BaseModel {
   async read(options: AnswerReadOptions) {
     if (options.hasOwnProperty('id')) {
       return db.get('SELECT * FROM answers WHERE id = ?', options.id);
+    }
+    return db.all(
+      'SELECT * FROM answers',
+    );
+  }
+
+  async readWatcherAnswers(options: WatcherAnswerReadOptions) {
+    if (options.hasOwnProperty('gameId')
+      && options.hasOwnProperty('questionId')
+      && options.hasOwnProperty('playerId')
+    ) {
+      return db.get(`SELECT * FROM watcher_answers WHERE game_id = ?
+         AND question_id = ?
+         AND player_id = ?
+        `, [options.gameId, options.questionId, options.playerId]);
     }
     return db.all(
       'SELECT * FROM answers',
@@ -77,6 +107,24 @@ class Answer extends BaseModel {
     );
   }
 
+  async createWatcherAnswer(options: WatcherAnswerOptions): Promise<RunResult> {
+    const {
+      gameId,
+      playerId,
+      questionId,
+      variantId,
+      status,
+      timestamp,
+    } = options;
+    return db.run(
+      `INSERT INTO 
+            watcher_answers (game_id, player_id, question_id, variant_id, timestamp, status) 
+            VALUES (?, ?, ?, ?, ?, ?)
+      `,
+      [gameId, playerId, questionId, variantId, timestamp, status],
+    );
+  }
+
   async updateAnswerStatus(status: 'error' | 'success' | 'in_process', answerId: number) {
     return db.run(`UPDATE answers SET status = ? 
         WHERE id = ?`, status, answerId);
@@ -114,6 +162,12 @@ class Answer extends BaseModel {
 
   async getTempAnswers(gameId: number) {
     return db.all(`SELECT * FROM temp_answers 
+        WHERE game_id = ? 
+        ORDER BY id ASC`, gameId);
+  }
+
+  async getWatcherAnswers(gameId: number) {
+    return db.all(`SELECT * FROM watcher_answers 
         WHERE game_id = ? 
         ORDER BY id ASC`, gameId);
   }

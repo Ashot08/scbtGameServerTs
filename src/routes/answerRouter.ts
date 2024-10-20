@@ -18,9 +18,27 @@ answerRouter.post('/create_temp_answer', [
   check('variantId', 'variantId должно быть isNumeric').isNumeric(),
 ], AuthMiddleware, AnswerController.createTempAnswer);
 
+answerRouter.post('/create_watcher_answer', [
+  check('gameId', 'gameId не может быть пустым').notEmpty(),
+  check('gameId', 'gameId должно быть isNumeric').isNumeric(),
+  check('playerId', 'playerId не может быть пустым').notEmpty(),
+  check('playerId', 'playerId должно быть isNumeric').isNumeric(),
+  check('questionId', 'questionId не может быть пустым').notEmpty(),
+  check('questionId', 'questionId должно быть isNumeric').isNumeric(),
+  check('variantId', 'variantId не может быть пустым').notEmpty(),
+  check('variantId', 'variantId должно быть isNumeric').isNumeric(),
+], AuthMiddleware, AnswerController.createWatcherAnswer);
+
 answerRouter.get('/temp_answers', [
   check('gameId', 'gameId не может быть пустым').notEmpty(),
   check('gameId', 'gameId должно быть Numeric').isNumeric(),
   // check('offset', 'Отступ не может быть пустым').notEmpty(),
   // check('filters', 'Фильтр не может быть пустым').notEmpty(),
 ], AuthMiddleware, AnswerController.getTempAnswersByGameId);
+
+answerRouter.get('/watcher_answers', [
+  check('gameId', 'gameId не может быть пустым').notEmpty(),
+  check('gameId', 'gameId должно быть Numeric').isNumeric(),
+  // check('offset', 'Отступ не может быть пустым').notEmpty(),
+  // check('filters', 'Фильтр не может быть пустым').notEmpty(),
+], AuthMiddleware, AnswerController.getWatcherAnswersByGameId);

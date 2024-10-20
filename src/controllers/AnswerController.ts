@@ -150,6 +150,32 @@ class AnswerController {
     }
   }
 
+  async checkCorrectAndUpdateAnswerByAnswerId(answerId: number, gameId: number) {
+    try {
+      const tempAnswers = await Answer.getTempAnswers(gameId);
+
+      const answer = await Answer.read({ id: answerId });
+      if (!answer || answer?.status !== 'in_process') {
+        throw new Error('Ошибка при проверке и обновлении ответа 1');
+      }
+      const tempAnswer = tempAnswers
+        .filter((a) => a.answer_id === answerId)
+        .slice(-1)[0];
+
+      if (tempAnswer) {
+        const variant = await Question.getQuestionVariantById(tempAnswer.variant_id);
+        if (variant) {
+          const status = (variant.correct === AnswerCorrect.True) ? 'success' : 'error';
+          return await this.updateAnswerStatus(status, answerId);
+        }
+      }
+
+      return await this.updateAnswerStatus('error', answerId);
+    } catch (e) {
+      return { status: 'error', message: 'Ошибка при проверке и обновлении ответа 2' };
+    }
+  }
+
   async updateAnswerEndTime(endTime: number, answerId: number) {
     try {
       const result = await Answer.updateAnswerEndTime(endTime, answerId);
@@ -204,13 +230,63 @@ class AnswerController {
         timestamp: Date.now(),
       };
 
+      const parentAnswer = await Answer.read({ id: answer?.answerId });
+      if (!parentAnswer || !(parentAnswer?.status === 'in_process')) {
+        return res.json({ status: 'error', message: 'createTempAnswer Error' });
+      }
+
       const result: RunResult = await Answer.createTempAnswer(answer);
       if (result.lastID) {
         return res.json({ status: 'success', message: 'Временный ответ успешно создан', result });
       }
     } catch (e) {
-      console.log(e);
       return res.json({ status: 'error', message: 'createTempAnswer Error' });
+    }
+  }
+
+  async createWatcherAnswer(req: any, res: any) {
+    try {
+      const validationErrors = validationResult(req);
+      if (!validationErrors.isEmpty()) {
+        return res.status(400).json({
+          status: 'error',
+          message: 'Ошибка при валидации данных createWatcherAnswer',
+          validationErrors,
+        });
+      }
+
+      const answer = {
+        ...req.body,
+        timestamp: Date.now(),
+        status: 'error',
+      };
+
+      const existingAnswer = await Answer.readWatcherAnswers({
+        gameId: answer?.gameId,
+        questionId: answer?.questionId,
+        playerId: answer?.playerId,
+      });
+
+      if (existingAnswer) {
+        return res.json({ status: 'error', message: 'createWatcherAnswer Error 1' });
+      }
+
+      const variant = await Question.getQuestionVariantByQuestionIdAndVariantId(answer.questionId, answer.variantId);
+      if (variant) {
+        answer.status = (variant.correct === AnswerCorrect.True) ? 'success' : 'error';
+      }
+      const result: RunResult = await Answer.createWatcherAnswer(answer);
+      if (result.lastID) {
+        return res.json({
+          status: 'success',
+          message: 'createWatcherAnswer успешно создан',
+          result,
+          answerStatus: answer.status,
+        });
+      }
+    } catch (e) {
+      console.log(e);
+      return res.json({ status: 'error', message: 'createWatcherAnswer Error 2' });
     }
   }
 
@@ -231,18 +307,36 @@ class AnswerController {
   async checkTempAnswersAndWriteAnswers(gameId: number) {
     try {
       const answersInProcess = await Answer.getAnswersInProcess(gameId);
-      if(Array.isArray(answersInProcess)) {
+      if (Array.isArray(answersInProcess)) {
         const tempAnswers = await Answer.getTempAnswers(gameId);
         for (const answer of answersInProcess) {
           const tempAnswer = tempAnswers
             .filter((a) => a.answer_id === answer.id)
             .slice(-1)[0];
-          await this.checkCorrectAndUpdateAnswer(tempAnswer.variant_id, answer.id);
+          if (tempAnswer) {
+            await this.checkCorrectAndUpdateAnswer(tempAnswer.variant_id, answer.id);
+          } else {
+            await this.updateAnswerStatus('error', answer.id);
+          }
         }
       }
       return { status: 'success', message: 'checkTempAnswersAndWriteAnswers Success' };
     } catch (e) {
       return { status: 'error', message: 'getTempAnswersByGameId Error' };
+    }
+  }
+
+  async getWatcherAnswersByGameId(req: any, res: any) {
+    try {
+      const { gameId } = req.query;
+      const answers = await Answer.getWatcherAnswers(gameId);
+      return res.status(200).json({
+        answers,
+        status: 'success',
+        message: 'getWatcherAnswersByGameId success',
+      });
+    } catch (e) {
+      return res.json({ status: 'error', message: 'getWatcherAnswersByGameId Error' });
     }
   }
 }
